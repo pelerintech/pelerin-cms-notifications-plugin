@@ -1,0 +1,121 @@
+---
+/**
+ * Templates list page — paginated list of notification templates.
+ */
+import AdminLayout from 'pelerin:admin-layout';
+
+const url = new URL(Astro.url);
+const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+const limit = 20;
+const search = url.searchParams.get('search') || '';
+
+let templates = [];
+let pagination = { page: 1, limit: 20, total: 0, totalPages: 1 };
+try {
+  const apiUrl = new URL('/api/plugins/notifications/templates', Astro.url);
+  apiUrl.searchParams.set('page', String(page));
+  apiUrl.searchParams.set('limit', String(limit));
+  if (search) apiUrl.searchParams.set('search', search);
+
+  const res = await fetch(apiUrl);
+  const data = await res.json();
+  templates = data.data || [];
+  pagination = data.pagination || pagination;
+} catch {
+  // Silently fail
+}
+---
+
+<AdminLayout>
+  <div class="min-h-screen bg-base-200 p-6">
+    {/* Breadcrumbs */}
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><a href="/admin">Admin</a></li>
+        <li><a href="/admin/plugins/notifications">Notifications</a></li>
+        <li>Templates</li>
+      </ul>
+    </div>
+
+    {/* Header */}
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Notification Templates</h1>
+      <a href="/admin/plugins/notifications/templates/new" class="btn btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        New Template
+      </a>
+    </div>
+
+    {/* Search */}
+    <div class="flex gap-4 mb-4">
+      <input
+        type="search"
+        placeholder="Search templates..."
+        class="input input-bordered flex-1 max-w-xs"
+        value={search}
+        id="search-input"
+      />
+    </div>
+
+    {/* Templates Table */}
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body p-0">
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Subject</th>
+                <th>Has HTML</th>
+                <th>Has Text</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {templates.length === 0
+                ? <tr><td colspan="6" class="text-center py-8 text-base-content/50">No templates found</td></tr>
+                : templates.map((t) => (
+                    <tr>
+                      <td class="font-medium">{t.name}</td>
+                      <td class="max-w-xs truncate" title={t.subject}>{t.subject}</td>
+                      <td>{t.body_html ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-ghost">No</span>'}</td>
+                      <td>{t.body_text ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-ghost">No</span>'}</td>
+                      <td>{new Date(t.created_at).toLocaleDateString()}</td>
+                      <td>
+                        <a href={`/admin/plugins/notifications/templates/${t.id}`} class="btn btn-ghost btn-sm">Edit</a>
+                      </td>
+                    </tr>
+                  ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {/* Pagination */}
+    {pagination.totalPages > 1 && (
+      <div class="flex justify-center mt-6 gap-2">
+        {pagination.page > 1 && (
+          <a href={`?page=${pagination.page - 1}${search ? `&search=${search}` : ''}`} class="btn btn-sm">← Prev</a>
+        )}
+        <span class="btn btn-sm btn-disabled">Page {pagination.page} of {pagination.totalPages}</span>
+        {pagination.page < pagination.totalPages && (
+          <a href={`?page=${pagination.page + 1}${search ? `&search=${search}` : ''}`} class="btn btn-sm">Next →</a>
+        )}
+      </div>
+    )}
+  </div>
+</AdminLayout>
+
+<script>
+  document.getElementById('search-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const q = e.target.value;
+      window.location.href = '/admin/plugins/notifications/templates' + (q ? `?search=${q}` : '');
+    }
+  });
+</script>

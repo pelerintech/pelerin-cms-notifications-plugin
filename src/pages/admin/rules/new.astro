@@ -1,0 +1,143 @@
+---
+/**
+ * Create new rule page.
+ */
+import AdminLayout from 'pelerin:admin-layout';
+
+// Fetch templates and providers for dropdowns
+let templates = [];
+let providers = [];
+
+try {
+  const templatesRes = await fetch(new URL('/api/plugins/notifications/templates', Astro.url));
+  const templatesData = await templatesRes.json();
+  templates = templatesData.data || [];
+} catch {
+  // Silently fail
+}
+
+const availableProviders = [
+  { name: 'sendgrid', label: 'SendGrid' },
+  { name: 'mailgun', label: 'Mailgun' },
+  { name: 'ses', label: 'AWS SES' },
+  { name: 'smtp', label: 'SMTP' },
+];
+---
+
+<AdminLayout>
+  <div class="min-h-screen bg-base-200 p-6">
+    {/* Breadcrumbs */}
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><a href="/admin">Admin</a></li>
+        <li><a href="/admin/plugins/notifications">Notifications</a></li>
+        <li><a href="/admin/plugins/notifications/rules">Rules</a></li>
+        <li>New Rule</li>
+      </ul>
+    </div>
+
+    {/* Header */}
+    <h1 class="text-2xl font-bold mb-6">Create New Rule</h1>
+
+    {/* Form */}
+    <div class="card bg-base-100 shadow-xl max-w-2xl">
+      <div class="card-body">
+        <form id="rule-form" method="POST" action="/api/plugins/notifications/rules">
+          {/* Event Pattern */}
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">Event Pattern</span>
+              <span class="label-text-alt text-base-content/50">e.g., shop.order.created, shop.*, *</span>
+            </label>
+            <input
+              type="text"
+              name="event_pattern"
+              placeholder="shop.order.created"
+              class="input input-bordered w-full"
+              required
+            />
+          </div>
+
+          {/* Template */}
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">Template</span>
+            </label>
+            <select name="template_id" class="select select-bordered w-full" required>
+              <option disabled selected>Select a template</option>
+              {templates.map((t) => (
+                <option value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Provider */}
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">Provider</span>
+            </label>
+            <select name="provider_name" class="select select-bordered w-full" required>
+              <option disabled selected>Select a provider</option>
+              {availableProviders.map((p) => (
+                <option value={p.name}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Recipients */}
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">To</span>
+              <span class="label-text-alt text-base-content/50">Email or {{ field }}</span>
+            </label>
+            <input
+              type="text"
+              name="to"
+              placeholder="customer@example.com or {{ customer_email }}"
+              class="input input-bordered w-full"
+              required
+            />
+          </div>
+
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">CC (optional)</span>
+            </label>
+            <input
+              type="text"
+              name="cc"
+              placeholder="admin@example.com"
+              class="input input-bordered w-full"
+            />
+          </div>
+
+          <div class="form-control mb-4">
+            <label class="label">
+              <span class="label-text font-medium">BCC (optional)</span>
+            </label>
+            <input
+              type="text"
+              name="bcc"
+              placeholder="archive@example.com"
+              class="input input-bordered w-full"
+            />
+          </div>
+
+          {/* Active toggle */}
+          <div class="form-control mb-6">
+            <label class="label cursor-pointer">
+              <span class="label-text font-medium">Active</span>
+              <input type="checkbox" name="active" class="toggle toggle-success" checked />
+            </label>
+          </div>
+
+          {/* Actions */}
+          <div class="flex gap-2">
+            <button type="submit" class="btn btn-primary">Create Rule</button>
+            <a href="/admin/plugins/notifications/rules" class="btn btn-ghost">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

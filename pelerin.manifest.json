@@ -1,0 +1,66 @@
+{
+  "name": "pelerin_notifications",
+  "displayName": "Notifications",
+  "version": "1.0.0",
+  "description": "Event-to-notification routing system with pluggable email providers",
+  "adminPages": [
+    {
+      "path": "/admin/plugins/notifications",
+      "page": "/src/pages/admin/index.astro",
+      "label": "Notifications",
+      "icon": "mail"
+    },
+    {
+      "path": "/admin/plugins/notifications/rules",
+      "page": "/src/pages/admin/rules/index.astro",
+      "label": "Rules",
+      "parent": "/admin/plugins/notifications"
+    },
+    {
+      "path": "/admin/plugins/notifications/templates",
+      "page": "/src/pages/admin/templates/index.astro",
+      "label": "Templates",
+      "parent": "/admin/plugins/notifications"
+    },
+    {
+      "path": "/admin/plugins/notifications/providers",
+      "page": "/src/pages/admin/providers/index.astro",
+      "label": "Providers",
+      "parent": "/admin/plugins/notifications"
+    }
+  ],
+  "apiEndpoints": [
+    {
+      "path": "/api/plugins/notifications/rules",
+      "handler": "/src/api/notifications/rules/index.ts"
+    },
+    {
+      "path": "/api/plugins/notifications/rules/[id]",
+      "handler": "/src/api/notifications/rules/[id].ts"
+    },
+    {
+      "path": "/api/plugins/notifications/templates",
+      "handler": "/src/api/notifications/templates/index.ts"
+    },
+    {
+      "path": "/api/plugins/notifications/templates/[id]",
+      "handler": "/src/api/notifications/templates/[id].ts"
+    },
+    {
+      "path": "/api/plugins/notifications/providers/[name]/settings",
+      "handler": "/src/api/notifications/providers/[name]/settings.ts"
+    }
+  ],
+  "navItems": [
+    {
+      "label": "Notifications",
+      "path": "/admin/plugins/notifications",
+      "icon": "mail",
+      "children": [
+        { "label": "Rules", "path": "/admin/plugins/notifications/rules" },
+        { "label": "Templates", "path": "/admin/plugins/notifications/templates" },
+        { "label": "Providers", "path": "/admin/plugins/notifications/providers" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+---
+/**
+ * Notifications admin dashboard — grid of navigation cards.
+ */
+import AdminLayout from 'pelerin:admin-layout';
+
+const navCards = [
+  {
+    title: 'Rules',
+    description: 'Manage event-to-notification routing rules',
+    icon: '📋',
+    href: '/admin/plugins/notifications/rules',
+    color: 'primary',
+  },
+  {
+    title: 'Templates',
+    description: 'Create and edit email templates with {{ }} variables',
+    icon: '📝',
+    href: '/admin/plugins/notifications/templates',
+    color: 'secondary',
+  },
+  {
+    title: 'Providers',
+    description: 'Configure email providers (SendGrid, Mailgun, SES, SMTP)',
+    icon: '📤',
+    href: '/admin/plugins/notifications/providers',
+    color: 'accent',
+  },
+];
+---
+
+<AdminLayout>
+  <div class="min-h-screen bg-base-200 p-6">
+    {/* Breadcrumbs */}
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><a href="/admin">Admin</a></li>
+        <li>Notifications</li>
+      </ul>
+    </div>
+
+    {/* Header */}
+    <h1 class="text-2xl font-bold mb-6">Notifications</h1>
+
+    {/* Navigation Cards Grid */}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
+      {navCards.map((card) => (
+        <a href={card.href} class={`card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow border-t-4 border-${card.color}`}>
+          <div class="card-body">
+            <div class="text-4xl mb-2">{card.icon}</div>
+            <h2 class="card-title text-lg">{card.title}</h2>
+            <p class="text-sm text-base-content/60">{card.description}</p>
+            <div class="card-actions justify-end mt-4">
+              <span class="btn btn-sm btn-{card.color}">Manage →</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</AdminLayout>

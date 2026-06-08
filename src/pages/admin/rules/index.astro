@@ -1,0 +1,148 @@
+---
+/**
+ * Rules list page — paginated list of notification rules.
+ */
+import AdminLayout from 'pelerin:admin-layout';
+
+const url = new URL(Astro.url);
+const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+const limit = 20;
+const search = url.searchParams.get('search') || '';
+const activeFilter = url.searchParams.get('active');
+
+// Fetch rules from API
+let rules = [];
+let pagination = { page: 1, limit: 20, total: 0, totalPages: 1 };
+try {
+  const apiUrl = new URL('/api/plugins/notifications/rules', Astro.url);
+  apiUrl.searchParams.set('page', String(page));
+  apiUrl.searchParams.set('limit', String(limit));
+  if (search) apiUrl.searchParams.set('search', search);
+  if (activeFilter) apiUrl.searchParams.set('active', activeFilter);
+
+  const res = await fetch(apiUrl);
+  const data = await res.json();
+  rules = data.data || [];
+  pagination = data.pagination || pagination;
+} catch {
+  // Silently fail — empty list shown
+}
+---
+
+<AdminLayout>
+  <div class="min-h-screen bg-base-200 p-6">
+    {/* Breadcrumbs */}
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><a href="/admin">Admin</a></li>
+        <li><a href="/admin/plugins/notifications">Notifications</a></li>
+        <li>Rules</li>
+      </ul>
+    </div>
+
+    {/* Header */}
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Notification Rules</h1>
+      <a href="/admin/plugins/notifications/rules/new" class="btn btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+        </svg>
+        New Rule
+      </a>
+    </div>
+
+    {/* Filters */}
+    <div class="flex gap-4 mb-4">
+      <input
+        type="search"
+        placeholder="Search rules..."
+        class="input input-bordered flex-1 max-w-xs"
+        value={search}
+        id="search-input"
+      />
+      <select class="select select-bordered" id="active-filter">
+        <option value="" selected={!activeFilter}>All</option>
+        <option value="true" selected={activeFilter === 'true'}>Active</option>
+        <option value="false" selected={activeFilter === 'false'}>Inactive</option>
+      </select>
+    </div>
+
+    {/* Rules Table */}
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body p-0">
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>Event Pattern</th>
+                <th>Template</th>
+                <th>Provider</th>
+                <th>To</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rules.length === 0
+                ? <tr><td colspan="6" class="text-center py-8 text-base-content/50">No rules found</td></tr>
+                : rules.map((rule) => (
+                    <tr>
+                      <td><code class="bg-base-200 px-2 py-1 rounded text-sm">{rule.event_pattern}</code></td>
+                      <td>{rule.template_id}</td>
+                      <td><span class="badge badge-ghost">{rule.provider_name}</span></td>
+                      <td>{rule.to}</td>
+                      <td>
+                        <span class={`badge ${rule.active ? 'badge-success' : 'badge-ghost'}`}>
+                          {rule.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td>
+                        <a href={`/admin/plugins/notifications/rules/${rule.id}`} class="btn btn-ghost btn-sm">Edit</a>
+                      </td>
+                    </tr>
+                  ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {/* Pagination */}
+    {pagination.totalPages > 1 && (
+      <div class="flex justify-center mt-6 gap-2">
+        {pagination.page > 1 && (
+          <a href={`?page=${pagination.page - 1}${search ? `&search=${search}` : ''}${activeFilter ? `&active=${activeFilter}` : ''}`} class="btn btn-sm">
+            ← Prev
+          </a>
+        )}
+        <span class="btn btn-sm btn-disabled">
+          Page {pagination.page} of {pagination.totalPages}
+        </span>
+        {pagination.page < pagination.totalPages && (
+          <a href={`?page=${pagination.page + 1}${search ? `&search=${search}` : ''}${activeFilter ? `&active=${activeFilter}` : ''}`} class="btn btn-sm">
+            Next →
+          </a>
+        )}
+      </div>
+    )}
+  </div>
+</AdminLayout>
+
+<script>
+  // Client-side filter submission
+  document.getElementById('search-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') applyFilters();
+  });
+  document.getElementById('active-filter').addEventListener('change', applyFilters);
+
+  function applyFilters() {
+    const search = document.getElementById('search-input').value;
+    const active = document.getElementById('active-filter').value;
+    const params = new URLSearchParams();
+    params.set('page', '1');
+    if (search) params.set('search', search);
+    if (active) params.set('active', active);
+    window.location.href = '/admin/plugins/notifications/rules' + (params.toString() ? '?' + params.toString() : '');
+  }
+</script>

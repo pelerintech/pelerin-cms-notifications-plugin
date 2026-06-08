@@ -1,0 +1,195 @@
+---
+/**
+ * Logs detail page — full view of a single dispatch log entry.
+ */
+import AdminLayout from 'pelerin:admin-layout';
+
+const id = Astro.params.id;
+
+// Fetch log entry from API
+let logEntry = null;
+try {
+  const apiUrl = new URL(`/api/plugins/notifications/logs/${id}`, Astro.url);
+  const res = await fetch(apiUrl);
+  if (res.status === 404) {
+    Astro.redirect('/admin/plugins/notifications/logs');
+  }
+  const data = await res.json();
+  logEntry = data.data;
+} catch {
+  // Silently fail — error shown
+}
+
+// Build back URL preserving filter params
+const url = new URL(Astro.url);
+const backParams = new URLSearchParams();
+if (url.searchParams.has('provider')) backParams.set('provider', url.searchParams.get('provider'));
+if (url.searchParams.has('from')) backParams.set('from', url.searchParams.get('from'));
+if (url.searchParams.has('to')) backParams.set('to', url.searchParams.get('to'));
+if (url.searchParams.has('status')) backParams.set('status', url.searchParams.get('status'));
+if (url.searchParams.has('rule')) backParams.set('rule', url.searchParams.get('rule'));
+const backQuery = backParams.toString() ? '?' + backParams.toString() : '';
+
+// Helper to split comma-separated recipients into array
+function splitRecipients(str) {
+  if (!str) return [];
+  return str.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+// Truncate subject for breadcrumbs
+const truncatedSubject = logEntry
+  ? (logEntry.subject.length > 40 ? logEntry.subject.substring(0, 40) + '...' : logEntry.subject)
+  : 'Loading...';
+---
+
+<AdminLayout>
+  <div class="min-h-screen bg-base-200 p-6">
+    {!logEntry && (
+      <div class="text-center py-12">
+        <p class="text-base-content/50">Failed to load log entry</p>
+        <a href="/admin/plugins/notifications/logs" class="btn btn-sm mt-4">Back to Logs</a>
+      </div>
+    )}
+
+    {logEntry && (
+      <>
+        {/* Breadcrumbs */}
+        <div class="breadcrumbs text-sm mb-4">
+          <ul>
+            <li><a href="/admin">Admin</a></li>
+            <li><a href="/admin/plugins/notifications">Notifications</a></li>
+            <li><a href={`/admin/plugins/notifications/logs${backQuery}`}>Logs</a></li>
+            <li>{truncatedSubject}</li>
+          </ul>
+        </div>
+
+        {/* Header */}
+        <div class="flex justify-between items-center mb-6">
+          <h1 class="text-2xl font-bold">Log Entry</h1>
+          <a href={`/admin/plugins/notifications/logs${backQuery}`} class="btn btn-sm btn-ghost">
+            ← Back to Logs
+          </a>
+        </div>
+
+        {/* Status Badge */}
+        <div class="mb-6">
+          <span class={`badge text-sm ${logEntry.success ? 'badge-success' : 'badge-error'}`}>
+            {logEntry.success ? '✓ Success' : '✗ Failed'}
+          </span>
+          {logEntry.error && (
+            <div class="mt-2">
+              <span class="text-error text-sm font-medium">Error:</span>
+              <pre class="bg-base-300 p-3 rounded text-sm mt-1 whitespace-pre-wrap">{logEntry.error}</pre>
+            </div>
+          )}
+        </div>
+
+        {/* Metadata */}
+        <div class="card bg-base-100 shadow-xl mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-lg mb-4">Metadata</h2>
+            <div class="overflow-x-auto">
+              <table class="table w-full">
+                <tbody>
+                  <tr>
+                    <td class="font-medium w-48">Event Name</td>
+                    <td><code class="bg-base-200 px-2 py-1 rounded text-sm">{logEntry.event_name}</code></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium">Rule ID</td>
+                    <td><code class="bg-base-200 px-2 py-1 rounded text-sm">{logEntry.rule_id}</code></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium">Provider</td>
+                    <td><span class="badge badge-ghost">{logEntry.provider_name}</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium">Message ID</td>
+                    <td><code class="bg-base-200 px-2 py-1 rounded text-sm">{logEntry.message_id || '—'}</code></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium">Created At</td>
+                    <td>
+                      {new Date(logEntry.created_at).toLocaleString()}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Recipients */}
+        <div class="card bg-base-100 shadow-xl mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-lg mb-4">Recipients</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <h3 class="text-sm font-medium text-base-content/60 mb-2">To</h3>
+                {splitRecipients(logEntry.to).length > 0
+                  ? splitRecipients(logEntry.to).map((email) => (
+                      <div class="text-sm">{email}</div>
+                    ))
+                  : <span class="text-sm text-base-content/40">—</span>
+                }
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-base-content/60 mb-2">CC</h3>
+                {splitRecipients(logEntry.cc).length > 0
+                  ? splitRecipients(logEntry.cc).map((email) => (
+                      <div class="text-sm">{email}</div>
+                    ))
+                  : <span class="text-sm text-base-content/40">—</span>
+                }
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-base-content/60 mb-2">BCC</h3>
+                {splitRecipients(logEntry.bcc).length > 0
+                  ? splitRecipients(logEntry.bcc).map((email) => (
+                      <div class="text-sm">{email}</div>
+                    ))
+                  : <span class="text-sm text-base-content/40">—</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Subject */}
+        <div class="card bg-base-100 shadow-xl mb-6">
+          <div class="card-body">
+            <h2 class="card-title text-lg mb-4">Subject</h2>
+            <p class="text-base">{logEntry.subject}</p>
+          </div>
+        </div>
+
+        {/* Body HTML */}
+        {logEntry.body_html && (
+          <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+              <h2 class="card-title text-lg mb-4">Body (HTML)</h2>
+              <div class="border rounded-lg overflow-hidden">
+                <iframe
+                  class="w-full"
+                  style="min-height: 300px; border: none;"
+                  srcdoc={logEntry.body_html}
+                  sandbox=""
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Body Text */}
+        {logEntry.body_text && (
+          <div class="card bg-base-100 shadow-xl mb-6">
+            <div class="card-body">
+              <h2 class="card-title text-lg mb-4">Body (Plain Text)</h2>
+              <pre class="bg-base-200 p-4 rounded text-sm whitespace-pre-wrap font-mono">{logEntry.body_text}</pre>
+            </div>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+</AdminLayout>

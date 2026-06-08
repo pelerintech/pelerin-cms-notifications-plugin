@@ -1,0 +1,69 @@
+---
+/**
+ * Providers list page — grid of provider cards showing configuration status.
+ */
+import AdminLayout from 'pelerin:admin-layout';
+
+const providers = [
+  { name: 'sendgrid', label: 'SendGrid', icon: '✉️', description: 'SendGrid email delivery API' },
+  { name: 'mailgun', label: 'Mailgun', icon: '📧', description: 'Mailgun transactional email service' },
+  { name: 'ses', label: 'AWS SES', icon: '☁️', description: 'Amazon Simple Email Service' },
+  { name: 'smtp', label: 'SMTP', icon: '📮', description: 'Direct SMTP server connection' },
+  { name: 'brevo', label: 'Brevo', icon: '🔵', description: 'Brevo transactional email service' },
+];
+
+// Check which providers have settings configured
+const configuredProviders = new Set();
+for (const provider of providers) {
+  try {
+    const res = await fetch(new URL(`/api/plugins/notifications/providers/${provider.name}/settings`, Astro.url));
+    const data = await res.json();
+    if (data.data && Object.keys(data.data).length > 0) {
+      configuredProviders.add(provider.name);
+    }
+  } catch {
+    // Silently fail
+  }
+}
+---
+
+<AdminLayout>
+  <div class="min-h-screen bg-base-200 p-6">
+    {/* Breadcrumbs */}
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><a href="/admin">Admin</a></li>
+        <li><a href="/admin/plugins/notifications">Notifications</a></li>
+        <li>Providers</li>
+      </ul>
+    </div>
+
+    {/* Header */}
+    <h1 class="text-2xl font-bold mb-6">Email Providers</h1>
+
+    {/* Provider Cards Grid */}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
+      {providers.map((provider) => {
+        const isConfigured = configuredProviders.has(provider.name);
+        return (
+          <a href={`/admin/plugins/notifications/providers/${provider.name}`} class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+            <div class="card-body">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl">{provider.icon}</span>
+                <div>
+                  <h2 class="card-title text-lg">{provider.label}</h2>
+                  <p class="text-sm text-base-content/60">{provider.description}</p>
+                </div>
+              </div>
+              <div class="card-actions justify-end mt-2">
+                <span class={`badge ${isConfigured ? 'badge-success' : 'badge-warning'} gap-1`}>
+                  {isConfigured ? '✓ Configured' : '⚠ Not configured'}
+                </span>
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</AdminLayout>
