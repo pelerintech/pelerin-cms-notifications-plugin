@@ -3,6 +3,10 @@
  * Templates list page — paginated list of notification templates.
  */
 import AdminLayout from 'pelerin:admin-layout';
+import { createPluginContext } from 'pelerin:plugin-sdk';
+
+const sdk = createPluginContext();
+const user = await sdk.auth.requireAdmin(Astro.request);
 
 const url = new URL(Astro.url);
 const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
@@ -26,26 +30,12 @@ try {
 }
 ---
 
-<AdminLayout>
-  <div class="min-h-screen bg-base-200 p-6">
-    {/* Breadcrumbs */}
-    <div class="breadcrumbs text-sm mb-4">
-      <ul>
-        <li><a href="/admin">Admin</a></li>
-        <li><a href="/admin/plugins/notifications">Notifications</a></li>
-        <li>Templates</li>
-      </ul>
-    </div>
-
+<AdminLayout title="Templates" currentPath="/admin/plugins/notifications/templates" user={user}>
+  <div class="col-span-12">
     {/* Header */}
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Notification Templates</h1>
-      <a href="/admin/plugins/notifications/templates/new" class="btn btn-primary">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-        </svg>
-        New Template
-      </a>
+      <a href="/admin/plugins/notifications/templates/new" class="btn btn-primary">New Template</a>
     </div>
 
     {/* Search */}
@@ -60,41 +50,46 @@ try {
     </div>
 
     {/* Templates Table */}
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body p-0">
-        <div class="overflow-x-auto">
-          <table class="table table-zebra w-full">
-            <thead>
+    {templates.length === 0 ? (
+      <p class="text-base-content/60">No templates found.</p>
+    ) : (
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Subject</th>
+              <th>Has HTML</th>
+              <th>Has Text</th>
+              <th>Created</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {templates.map((t) => (
               <tr>
-                <th>Name</th>
-                <th>Subject</th>
-                <th>Has HTML</th>
-                <th>Has Text</th>
-                <th>Created</th>
-                <th>Actions</th>
+                <td class="font-medium">{t.name}</td>
+                <td class="max-w-xs truncate" title={t.subject}>{t.subject}</td>
+                <td>
+                  <span class={`badge badge-sm ${t.body_html ? 'badge-success' : 'badge-ghost'}`}>
+                    {t.body_html ? 'Yes' : 'No'}
+                  </span>
+                </td>
+                <td>
+                  <span class={`badge badge-sm ${t.body_text ? 'badge-success' : 'badge-ghost'}`}>
+                    {t.body_text ? 'Yes' : 'No'}
+                  </span>
+                </td>
+                <td>{new Date(t.created_at).toLocaleDateString()}</td>
+                <td>
+                  <a href={`/admin/plugins/notifications/templates/${t.id}`} class="btn btn-ghost btn-xs">Edit</a>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {templates.length === 0
-                ? <tr><td colspan="6" class="text-center py-8 text-base-content/50">No templates found</td></tr>
-                : templates.map((t) => (
-                    <tr>
-                      <td class="font-medium">{t.name}</td>
-                      <td class="max-w-xs truncate" title={t.subject}>{t.subject}</td>
-                      <td>{t.body_html ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-ghost">No</span>'}</td>
-                      <td>{t.body_text ? '<span class="badge badge-success">Yes</span>' : '<span class="badge badge-ghost">No</span>'}</td>
-                      <td>{new Date(t.created_at).toLocaleDateString()}</td>
-                      <td>
-                        <a href={`/admin/plugins/notifications/templates/${t.id}`} class="btn btn-ghost btn-sm">Edit</a>
-                      </td>
-                    </tr>
-                  ))
-              }
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </div>
+    )}
 
     {/* Pagination */}
     {pagination.totalPages > 1 && (

@@ -2,65 +2,38 @@
   "name": "pelerin_notifications",
   "displayName": "Notifications",
   "version": "1.0.0",
-  "description": "Event-to-notification routing system with pluggable email providers",
+  "dbConfig": "./src/db/config.ts",
+  "dbSeed": "./src/db/seed.ts",
+  "publicPages": [],
   "adminPages": [
-    {
-      "path": "/admin/plugins/notifications",
-      "page": "/src/pages/admin/index.astro",
-      "label": "Notifications",
-      "icon": "mail"
-    },
-    {
-      "path": "/admin/plugins/notifications/rules",
-      "page": "/src/pages/admin/rules/index.astro",
-      "label": "Rules",
-      "parent": "/admin/plugins/notifications"
-    },
-    {
-      "path": "/admin/plugins/notifications/templates",
-      "page": "/src/pages/admin/templates/index.astro",
-      "label": "Templates",
-      "parent": "/admin/plugins/notifications"
-    },
-    {
-      "path": "/admin/plugins/notifications/providers",
-      "page": "/src/pages/admin/providers/index.astro",
-      "label": "Providers",
-      "parent": "/admin/plugins/notifications"
-    }
+    { "pattern": "/admin/plugins/notifications", "entrypoint": "./src/pages/admin/index.astro" },
+    { "pattern": "/admin/plugins/notifications/rules", "entrypoint": "./src/pages/admin/rules/index.astro" },
+    { "pattern": "/admin/plugins/notifications/rules/new", "entrypoint": "./src/pages/admin/rules/new.astro" },
+    { "pattern": "/admin/plugins/notifications/rules/[id]", "entrypoint": "./src/pages/admin/rules/[id].astro" },
+    { "pattern": "/admin/plugins/notifications/templates", "entrypoint": "./src/pages/admin/templates/index.astro" },
+    { "pattern": "/admin/plugins/notifications/templates/new", "entrypoint": "./src/pages/admin/templates/new.astro" },
+    { "pattern": "/admin/plugins/notifications/templates/[id]", "entrypoint": "./src/pages/admin/templates/[id].astro" },
+    { "pattern": "/admin/plugins/notifications/providers", "entrypoint": "./src/pages/admin/providers/index.astro" },
+    { "pattern": "/admin/plugins/notifications/providers/[name]", "entrypoint": "./src/pages/admin/providers/[name].astro" },
+    { "pattern": "/admin/plugins/notifications/logs", "entrypoint": "./src/pages/admin/logs/index.astro" },
+    { "pattern": "/admin/plugins/notifications/logs/[id]", "entrypoint": "./src/pages/admin/logs/[id].astro" }
   ],
   "apiEndpoints": [
-    {
-      "path": "/api/plugins/notifications/rules",
-      "handler": "/src/api/notifications/rules/index.ts"
-    },
-    {
-      "path": "/api/plugins/notifications/rules/[id]",
-      "handler": "/src/api/notifications/rules/[id].ts"
-    },
-    {
-      "path": "/api/plugins/notifications/templates",
-      "handler": "/src/api/notifications/templates/index.ts"
-    },
-    {
-      "path": "/api/plugins/notifications/templates/[id]",
-      "handler": "/src/api/notifications/templates/[id].ts"
-    },
-    {
-      "path": "/api/plugins/notifications/providers/[name]/settings",
-      "handler": "/src/api/notifications/providers/[name]/settings.ts"
-    }
+    { "pattern": "/api/plugins/notifications/rules", "entrypoint": "./src/api/notifications/rules/index.mjs" },
+    { "pattern": "/api/plugins/notifications/rules/create", "entrypoint": "./src/api/notifications/rules/create.mjs" },
+    { "pattern": "/api/plugins/notifications/rules/[id]", "entrypoint": "./src/api/notifications/rules/[id].mjs" },
+    { "pattern": "/api/plugins/notifications/templates", "entrypoint": "./src/api/notifications/templates/index.mjs" },
+    { "pattern": "/api/plugins/notifications/templates/create", "entrypoint": "./src/api/notifications/templates/create.mjs" },
+    { "pattern": "/api/plugins/notifications/templates/[id]", "entrypoint": "./src/api/notifications/templates/[id].mjs" },
+    { "pattern": "/api/plugins/notifications/providers/[name]/settings", "entrypoint": "./src/api/notifications/providers/[name]/settings.mjs" },
+    { "pattern": "/api/plugins/notifications/logs", "entrypoint": "./src/api/notifications/logs/index.mjs" },
+    { "pattern": "/api/plugins/notifications/logs/[id]", "entrypoint": "./src/api/notifications/logs/[id].mjs" }
   ],
   "navItems": [
-    {
-      "label": "Notifications",
-      "path": "/admin/plugins/notifications",
-      "icon": "mail",
-      "children": [
-        { "label": "Rules", "path": "/admin/plugins/notifications/rules" },
-        { "label": "Templates", "path": "/admin/plugins/notifications/templates" },
-        { "label": "Providers", "path": "/admin/plugins/notifications/providers" }
-      ]
-    }
+    { "label": "Notifications", "href": "/admin/plugins/notifications", "icon": "mail" },
+    { "label": "Rules", "href": "/admin/plugins/notifications/rules", "icon": "list-check" },
+    { "label": "Templates", "href": "/admin/plugins/notifications/templates", "icon": "file-lines" },
+    { "label": "Providers", "href": "/admin/plugins/notifications/providers", "icon": "server" },
+    { "label": "Logs", "href": "/admin/plugins/notifications/logs", "icon": "table-cells" }
   ]
 }

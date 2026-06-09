@@ -3,6 +3,10 @@
  * Logs list page — paginated list of notification dispatch logs.
  */
 import AdminLayout from 'pelerin:admin-layout';
+import { createPluginContext } from 'pelerin:plugin-sdk';
+
+const sdk = createPluginContext();
+const user = await sdk.auth.requireAdmin(Astro.request);
 
 const url = new URL(Astro.url);
 const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
@@ -37,17 +41,8 @@ try {
 const totalPages = Math.max(1, Math.ceil(total / pageSize));
 ---
 
-<AdminLayout>
-  <div class="min-h-screen bg-base-200 p-6">
-    {/* Breadcrumbs */}
-    <div class="breadcrumbs text-sm mb-4">
-      <ul>
-        <li><a href="/admin">Admin</a></li>
-        <li><a href="/admin/plugins/notifications">Notifications</a></li>
-        <li>Logs</li>
-      </ul>
-    </div>
-
+<AdminLayout title="Logs" currentPath="/admin/plugins/notifications/logs" user={user}>
+  <div class="col-span-12">
     {/* Header */}
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold">Dispatch Logs</h1>
@@ -55,94 +50,87 @@ const totalPages = Math.max(1, Math.ceil(total / pageSize));
     </div>
 
     {/* Filters */}
-    <div class="card bg-base-100 shadow-xl mb-6">
-      <div class="card-body p-4">
-        <div class="flex flex-wrap gap-4 items-end">
-          <div class="form-control">
-            <label class="label"><span class="label-text text-xs">Provider</span></label>
-            <select class="select select-bordered select-sm" id="filter-provider">
-              <option value="" selected={!provider}>All Providers</option>
-              <option value="sendgrid" selected={provider === 'sendgrid'}>SendGrid</option>
-              <option value="mailgun" selected={provider === 'mailgun'}>Mailgun</option>
-              <option value="ses" selected={provider === 'ses'}>SES</option>
-              <option value="smtp" selected={provider === 'smtp'}>SMTP</option>
-              <option value="local" selected={provider === 'local'}>Local</option>
-            </select>
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text text-xs">From Date</span></label>
-            <input type="date" class="input input-bordered input-sm" id="filter-from" value={from} />
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text text-xs">To Date</span></label>
-            <input type="date" class="input input-bordered input-sm" id="filter-to" value={to} />
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text text-xs">Status</span></label>
-            <select class="select select-bordered select-sm" id="filter-status">
-              <option value="" selected={!status}>All</option>
-              <option value="success" selected={status === 'success'}>Success</option>
-              <option value="failure" selected={status === 'failure'}>Failure</option>
-            </select>
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text text-xs">Rule ID</span></label>
-            <input type="text" class="input input-bordered input-sm" id="filter-rule" placeholder="Filter by rule ID" value={rule} />
-          </div>
-          <button class="btn btn-primary btn-sm" id="apply-filters">Apply</button>
-          <button class="btn btn-ghost btn-sm" id="clear-filters">Clear</button>
-        </div>
+    <div class="flex flex-wrap gap-4 items-end mb-6">
+      <div class="form-control">
+        <label class="label"><span class="label-text text-xs">Provider</span></label>
+        <select class="select select-bordered select-sm" id="filter-provider">
+          <option value="" selected={!provider}>All Providers</option>
+          <option value="sendgrid" selected={provider === 'sendgrid'}>SendGrid</option>
+          <option value="mailgun" selected={provider === 'mailgun'}>Mailgun</option>
+          <option value="ses" selected={provider === 'ses'}>SES</option>
+          <option value="smtp" selected={provider === 'smtp'}>SMTP</option>
+          <option value="local" selected={provider === 'local'}>Local</option>
+        </select>
       </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text text-xs">From Date</span></label>
+        <input type="date" class="input input-bordered input-sm" id="filter-from" value={from} />
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text text-xs">To Date</span></label>
+        <input type="date" class="input input-bordered input-sm" id="filter-to" value={to} />
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text text-xs">Status</span></label>
+        <select class="select select-bordered select-sm" id="filter-status">
+          <option value="" selected={!status}>All</option>
+          <option value="success" selected={status === 'success'}>Success</option>
+          <option value="failure" selected={status === 'failure'}>Failure</option>
+        </select>
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text text-xs">Rule ID</span></label>
+        <input type="text" class="input input-bordered input-sm" id="filter-rule" placeholder="Filter by rule ID" value={rule} />
+      </div>
+      <button class="btn btn-primary btn-sm" id="apply-filters">Apply</button>
+      <button class="btn btn-ghost btn-sm" id="clear-filters">Clear</button>
     </div>
 
     {/* Logs Table */}
-    <div class="card bg-base-100 shadow-xl">
-      <div class="card-body p-0">
-        <div class="overflow-x-auto">
-          <table class="table table-zebra w-full">
-            <thead>
+    {logs.length === 0 ? (
+      <p class="text-base-content/60">No log entries found.</p>
+    ) : (
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Provider</th>
+              <th>Rule ID</th>
+              <th>Subject</th>
+              <th>Status</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log) => (
               <tr>
-                <th>Date</th>
-                <th>Provider</th>
-                <th>Rule ID</th>
-                <th>Subject</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <td class="text-sm">
+                  {new Date(log.created_at).toLocaleDateString()}
+                  <br />
+                  <span class="text-xs text-base-content/50">
+                    {new Date(log.created_at).toLocaleTimeString()}
+                  </span>
+                </td>
+                <td><span class="badge badge-ghost">{log.provider_name}</span></td>
+                <td><code class="bg-base-200 px-2 py-1 rounded text-xs">{log.rule_id.substring(0, 8)}...</code></td>
+                <td class="max-w-xs">
+                  <span class="block truncate" title={log.subject}>{log.subject}</span>
+                </td>
+                <td>
+                  <span class={`badge ${log.success ? 'badge-success' : 'badge-error'}`}>
+                    {log.success ? 'Success' : 'Failed'}
+                  </span>
+                </td>
+                <td>
+                  <a href={`/admin/plugins/notifications/logs/${log.id}`} class="btn btn-ghost btn-xs">View</a>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {logs.length === 0
-                ? <tr><td colspan="6" class="text-center py-8 text-base-content/50">No log entries found</td></tr>
-                : logs.map((log) => (
-                    <tr>
-                      <td class="text-sm">
-                        {new Date(log.created_at).toLocaleDateString()}
-                        <br />
-                        <span class="text-xs text-base-content/50">
-                          {new Date(log.created_at).toLocaleTimeString()}
-                        </span>
-                      </td>
-                      <td><span class="badge badge-ghost">{log.provider_name}</span></td>
-                      <td><code class="bg-base-200 px-2 py-1 rounded text-xs">{log.rule_id.substring(0, 8)}...</code></td>
-                      <td class="max-w-xs">
-                        <span class="block truncate" title={log.subject}>{log.subject}</span>
-                      </td>
-                      <td>
-                        <span class={`badge ${log.success ? 'badge-success' : 'badge-error'}`}>
-                          {log.success ? 'Success' : 'Failed'}
-                        </span>
-                      </td>
-                      <td>
-                        <a href={`/admin/plugins/notifications/logs/${log.id}`} class="btn btn-ghost btn-sm">View</a>
-                      </td>
-                    </tr>
-                  ))
-              }
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </div>
+    )}
 
     {/* Pagination */}
     {totalPages > 1 && (

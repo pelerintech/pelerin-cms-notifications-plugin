@@ -3,6 +3,10 @@
  * Providers list page — grid of provider cards showing configuration status.
  */
 import AdminLayout from 'pelerin:admin-layout';
+import { createPluginContext } from 'pelerin:plugin-sdk';
+
+const sdk = createPluginContext();
+const user = await sdk.auth.requireAdmin(Astro.request);
 
 const providers = [
   { name: 'sendgrid', label: 'SendGrid', icon: '✉️', description: 'SendGrid email delivery API' },
@@ -27,18 +31,8 @@ for (const provider of providers) {
 }
 ---
 
-<AdminLayout>
-  <div class="min-h-screen bg-base-200 p-6">
-    {/* Breadcrumbs */}
-    <div class="breadcrumbs text-sm mb-4">
-      <ul>
-        <li><a href="/admin">Admin</a></li>
-        <li><a href="/admin/plugins/notifications">Notifications</a></li>
-        <li>Providers</li>
-      </ul>
-    </div>
-
-    {/* Header */}
+<AdminLayout title="Providers" currentPath="/admin/plugins/notifications/providers" user={user}>
+  <div class="col-span-12">
     <h1 class="text-2xl font-bold mb-6">Email Providers</h1>
 
     {/* Provider Cards Grid */}

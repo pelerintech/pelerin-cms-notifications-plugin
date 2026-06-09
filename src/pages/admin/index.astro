@@ -3,6 +3,10 @@
  * Notifications admin dashboard — grid of navigation cards.
  */
 import AdminLayout from 'pelerin:admin-layout';
+import { createPluginContext } from 'pelerin:plugin-sdk';
+
+const sdk = createPluginContext();
+const user = await sdk.auth.requireAdmin(Astro.request);
 
 const navCards = [
   {
@@ -26,24 +30,20 @@ const navCards = [
     href: '/admin/plugins/notifications/providers',
     color: 'accent',
   },
+  {
+    title: 'Logs',
+    description: 'View dispatch logs and audit trail',
+    icon: '📊',
+    href: '/admin/plugins/notifications/logs',
+    color: 'neutral',
+  },
 ];
 ---
 
-<AdminLayout>
-  <div class="min-h-screen bg-base-200 p-6">
-    {/* Breadcrumbs */}
-    <div class="breadcrumbs text-sm mb-4">
-      <ul>
-        <li><a href="/admin">Admin</a></li>
-        <li>Notifications</li>
-      </ul>
-    </div>
-
-    {/* Header */}
-    <h1 class="text-2xl font-bold mb-6">Notifications</h1>
-
+<AdminLayout title="Notifications" currentPath="/admin/plugins/notifications" user={user}>
+  <div class="col-span-12">
     {/* Navigation Cards Grid */}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl">
       {navCards.map((card) => (
         <a href={card.href} class={`card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow border-t-4 border-${card.color}`}>
           <div class="card-body">
