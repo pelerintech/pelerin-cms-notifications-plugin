@@ -19,15 +19,15 @@
     { "pattern": "/admin/plugins/notifications/logs/[id]", "entrypoint": "./src/pages/admin/logs/[id].astro" }
   ],
   "apiEndpoints": [
-    { "pattern": "/api/plugins/notifications/rules", "entrypoint": "./src/api/notifications/rules/index.mjs" },
-    { "pattern": "/api/plugins/notifications/rules/create", "entrypoint": "./src/api/notifications/rules/create.mjs" },
-    { "pattern": "/api/plugins/notifications/rules/[id]", "entrypoint": "./src/api/notifications/rules/[id].mjs" },
-    { "pattern": "/api/plugins/notifications/templates", "entrypoint": "./src/api/notifications/templates/index.mjs" },
-    { "pattern": "/api/plugins/notifications/templates/create", "entrypoint": "./src/api/notifications/templates/create.mjs" },
-    { "pattern": "/api/plugins/notifications/templates/[id]", "entrypoint": "./src/api/notifications/templates/[id].mjs" },
-    { "pattern": "/api/plugins/notifications/providers/[name]/settings", "entrypoint": "./src/api/notifications/providers/[name]/settings.mjs" },
-    { "pattern": "/api/plugins/notifications/logs", "entrypoint": "./src/api/notifications/logs/index.mjs" },
-    { "pattern": "/api/plugins/notifications/logs/[id]", "entrypoint": "./src/api/notifications/logs/[id].mjs" }
+    { "pattern": "/api/plugins/notifications/rules", "entrypoint": "./src/api/notifications/rules/index.ts" },
+    { "pattern": "/api/plugins/notifications/rules/create", "entrypoint": "./src/api/notifications/rules/create.ts" },
+    { "pattern": "/api/plugins/notifications/rules/[id]", "entrypoint": "./src/api/notifications/rules/[id].ts" },
+    { "pattern": "/api/plugins/notifications/templates", "entrypoint": "./src/api/notifications/templates/index.ts" },
+    { "pattern": "/api/plugins/notifications/templates/create", "entrypoint": "./src/api/notifications/templates/create.ts" },
+    { "pattern": "/api/plugins/notifications/templates/[id]", "entrypoint": "./src/api/notifications/templates/[id].ts" },
+    { "pattern": "/api/plugins/notifications/providers/[name]/settings", "entrypoint": "./src/api/notifications/providers/[name]/settings.ts" },
+    { "pattern": "/api/plugins/notifications/logs", "entrypoint": "./src/api/notifications/logs/index.ts" },
+    { "pattern": "/api/plugins/notifications/logs/[id]", "entrypoint": "./src/api/notifications/logs/[id].ts" }
   ],
   "navItems": [
     { "label": "Notifications", "href": "/admin/plugins/notifications", "icon": "mail" },
