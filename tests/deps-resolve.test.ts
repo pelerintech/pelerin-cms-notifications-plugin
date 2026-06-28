@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 
+/**
+ * Dependency smoke check — NOT a behaviour test.
+ *
+ * Verifies that the transitive `drizzle-orm/libsql` and `@libsql/client`
+ * packages resolve and export their expected symbols. This catches a missing
+ * npm install / a bad hoist, but it exercises no plugin logic. Behavioural
+ * data access is covered by `tests/lib/data/*.test.ts` against the real-SQLite
+ * harness in `tests/db/harness.ts`.
+ */
 test('drizzle-orm/libsql resolves', async () => {
   const mod = await import('drizzle-orm/libsql');
   assert.ok(mod.drizzle, 'drizzle should be exported');

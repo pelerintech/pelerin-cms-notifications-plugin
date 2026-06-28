@@ -28,3 +28,10 @@ export function getProvider(name: string): NotificationProvider | null {
 export function listProviders(): string[] {
   return [...providers.keys()];
 }
+
+/** List all registered provider objects (full NotificationProvider instances).
+ *  Non-breaking companion to `listProviders()` for callers that need `channels`
+ *  or `getConfigSchema()` without a second `getProvider` lookup per item. */
+export function listProviderObjects(): NotificationProvider[] {
+  return [...providers.values()];
+}

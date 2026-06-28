@@ -4,6 +4,10 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { db } from 'astro:db';
+import { listTemplates } from '../../../lib/data/templates.ts';
+import { listRules, getRule } from '../../../lib/data/rules.ts';
+import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -11,24 +15,48 @@ const user = await sdk.auth.requireAdmin(Astro.request);
 const id = Astro.params.id;
 const returnPage = Astro.url.searchParams.get('page') || '1';
 
-// Fetch rule data
+// Load the rule being edited directly via accessors (server-side fetch of our
+// own admin-gated API would 401 — the session cookie isn't forwarded).
 let rule = null;
 let templates = [];
 
 try {
-  const templatesRes = await fetch(new URL('/api/plugins/notifications/templates', Astro.url));
-  const templatesData = await templatesRes.json();
-  templates = templatesData.data || [];
+  rule = await getRule(db, id);
 } catch {
   // Silently fail
 }
 
-const availableProviders = [
-  { name: 'sendgrid', label: 'SendGrid' },
-  { name: 'mailgun', label: 'Mailgun' },
-  { name: 'ses', label: 'AWS SES' },
-  { name: 'smtp', label: 'SMTP' },
-];
+try {
+  const result = await listTemplates(db, { page: 1, limit: 1000 });
+  templates = result.data;
+} catch {
+  // Silently fail
+}
+
+// Available providers (registry-derived, channel+configured-filtered,
+// local-excluded, mode-aware) via the handler directly. Replaces the former
+// hardcoded `availableProviders` array that drifted out of sync with the registry.
+let availableProviders = [];
+try {
+  const channel = rule?.channel || 'email';
+  const result = await listAvailableProvidersHandler(db, channel);
+  availableProviders = result.body.data;
+} catch {
+  // Silently fail — empty dropdown shown
+}
+
+// UI-side label map for provider display names. A provider missing from this
+// map renders as its raw `name` (visible degradation, not a silent disappearance).
+const providerLabels = {
+  sendgrid: 'SendGrid',
+  mailgun: 'Mailgun',
+  ses: 'AWS SES',
+  smtp: 'SMTP',
+  brevo: 'Brevo',
+};
+function providerLabel(name) {
+  return providerLabels[name] || name;
+}
 ---
 
 <AdminLayout title="Edit Rule" currentPath={`/admin/plugins/notifications/rules/${id}`} user={user}>
@@ -48,6 +76,7 @@ const availableProviders = [
           type="text"
           name="event_pattern"
           class="input input-bordered w-full"
+          value={rule?.event_pattern || ''}
           required
         />
       </div>
@@ -58,10 +87,20 @@ const availableProviders = [
           <span class="label-text font-medium">Template</span>
         </label>
         <select name="template_id" class="select select-bordered w-full" required>
-          <option disabled>Select a template</option>
+          <option disabled selected={!rule?.template_id}>Select a template</option>
           {templates.map((t) => (
-            <option value={t.id}>{t.name}</option>
+            <option value={t.id} selected={rule?.template_id === t.id}>{t.name}</option>
           ))}
+        </select>
+      </div>
+
+      {/* Channel */}
+      <div class="form-control mb-4">
+        <label class="label">
+          <span class="label-text font-medium">Channel</span>
+        </label>
+        <select name="channel" class="select select-bordered w-full" required>
+          <option value="email" selected={rule?.channel === 'email' || !rule}>Email</option>
         </select>
       </div>
 
@@ -71,9 +110,9 @@ const availableProviders = [
           <span class="label-text font-medium">Provider</span>
         </label>
         <select name="provider_name" class="select select-bordered w-full" required>
-          <option disabled selected>Select a provider</option>
+          <option disabled selected={!rule?.provider_name}>Select a provider</option>
           {availableProviders.map((p) => (
-            <option value={p.name}>{p.label}</option>
+            <option value={p.name} selected={rule?.provider_name === p.name}>{providerLabel(p.name)}</option>
           ))}
         </select>
       </div>
@@ -87,6 +126,7 @@ const availableProviders = [
           type="text"
           name="to"
           class="input input-bordered w-full"
+          value={rule?.to || ''}
           required
         />
       </div>
@@ -99,6 +139,7 @@ const availableProviders = [
           type="text"
           name="cc"
           class="input input-bordered w-full"
+          value={rule?.cc || ''}
         />
       </div>
 
@@ -110,6 +151,7 @@ const availableProviders = [
           type="text"
           name="bcc"
           class="input input-bordered w-full"
+          value={rule?.bcc || ''}
         />
       </div>
 
@@ -117,7 +159,7 @@ const availableProviders = [
       <div class="form-control mb-6">
         <label class="label cursor-pointer">
           <span class="label-text font-medium">Active</span>
-          <input type="checkbox" name="active" class="toggle toggle-success" />
+          <input type="checkbox" name="active" class="toggle toggle-success" checked={rule?.active ?? false} />
         </label>
       </div>
 

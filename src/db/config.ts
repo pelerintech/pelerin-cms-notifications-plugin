@@ -10,6 +10,7 @@ const notification_rules = defineTable({
     event_pattern: column.text(),
     template_id: column.text(),
     provider_name: column.text(),
+    channel: column.text({ default: 'email' }),
     to: column.text(),
     cc: column.text({ optional: true }),
     bcc: column.text({ optional: true }),
@@ -18,7 +19,7 @@ const notification_rules = defineTable({
     updated_at: column.date({ mode: 'timestamp', optional: true }),
   },
   uniqueConstraints: [
-    { name: 'unique_rule', columns: ['event_pattern', 'template_id', 'provider_name'] },
+    { name: 'unique_rule', columns: ['event_pattern', 'template_id', 'provider_name', 'channel'] },
   ],
 });
 

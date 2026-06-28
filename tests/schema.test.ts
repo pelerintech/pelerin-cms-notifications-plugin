@@ -3,9 +3,16 @@ import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 
 /**
- * Structural test for the astro:db config.ts.
- * The file imports from 'astro:db' so it cannot be imported outside Astro;
- * we read it as source and assert the table declarations exist.
+ * Lightweight structural test — KNOWN BEHAVIORAL GAP.
+ *
+ * `src/db/config.ts` imports from `astro:db`, so it cannot be imported
+ * outside the Astro build. We read it as source and assert the table
+ * declarations exist. This is an exports-exist / declaration-exist check,
+ * NOT a behavioural test — column/type/optionality parity between `config.ts`
+ * and the pure-Drizzle `schema.ts` is enforced by
+ * `tests/db/schema-parity.test.ts`, and behavioural data access is covered by
+ * `tests/lib/data/*.test.ts`. Kept because it cheaply catches a dropped
+ * `defineTable` export; runtime correctness is verified elsewhere.
  */
 describe('Database schema (config.ts)', () => {
   const source = readFileSync(new URL('../src/db/config.ts', import.meta.url), 'utf-8');

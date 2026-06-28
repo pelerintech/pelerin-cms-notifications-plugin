@@ -4,22 +4,22 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { db } from 'astro:db';
+import { getLog } from '../../../lib/data/logs.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
 
 const id = Astro.params.id;
 
-// Fetch log entry from API
+// Load the log entry directly via the accessor (server-side fetch of our own
+// admin-gated API would 401 — the session cookie isn't forwarded).
 let logEntry = null;
 try {
-  const apiUrl = new URL(`/api/plugins/notifications/logs/${id}`, Astro.url);
-  const res = await fetch(apiUrl);
-  if (res.status === 404) {
-    Astro.redirect('/admin/plugins/notifications/logs');
+  logEntry = await getLog(db, id);
+  if (!logEntry) {
+    return Astro.redirect('/admin/plugins/notifications/logs');
   }
-  const data = await res.json();
-  logEntry = data.data;
 } catch {
   // Silently fail — error shown
 }

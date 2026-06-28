@@ -56,6 +56,7 @@ export const notification_rules = sqliteTable('notification_rules', {
   event_pattern: text('event_pattern').notNull(),
   template_id: text('template_id').notNull(),
   provider_name: text('provider_name').notNull(),
+  channel: text('channel').notNull().default('email'),
   to: text('to').notNull(),
   cc: text('cc'),
   bcc: text('bcc'),

@@ -70,7 +70,7 @@ src/lib/data/
 
 There are exactly two entry points that obtain a `LibSQLDatabase` and pass it to accessors:
 
-1. **API endpoints** — `import { db } from 'astro:db'` (or `const { db } = await import('astro:db')` inside the wrapper function to keep the file importable in tests).
+1. **API endpoints** — top-level `import { db } from 'astro:db'` + `import { createPluginContext } from 'pelerin:plugin-sdk'` (see §6: the tested `runMethod` receives `db` as an injected `HandlerDeps` param, so these top-level imports are never exercised by unit tests — the loader stubs in `tests/stubs/` redirect them to inert modules under bare Node).
 2. **init.ts** — uses `ctx.db` from `createPluginContext()` (the SDK's `init` context).
 
 Both pass `db` to accessor functions. No other code obtains `db`.
@@ -79,11 +79,13 @@ Both pass `db` to accessor functions. No other code obtains `db`.
 
 ## 6. Endpoint handler pattern (testable HTTP layer)
 
-Each endpoint file exports:
-- A **handler function** (e.g., `createRuleHandler(db, body)`) that receives `db` directly, performs zod validation, calls accessors, and returns `{ status, body }`. This is harness-tested — no Astro required.
-- A thin **Astro wrapper** (`export const POST: APIRoute`) that dynamically imports `astro:db` and `pelerin:plugin-sdk`, calls `requireAdmin`, delegates to the handler, and builds the `Response`.
+Each endpoint file exports a `runMethod({ db, sdk, ctx }: HandlerDeps): Promise<Response>` function and a thin Astro wrapper:
+- **`runMethod`** (the testable surface) receives `db`/`sdk`/`ctx` as injected deps. Auth (`sdk.auth.requireAdmin`), body/query parsing, zod validation, accessor calls, and full `Response` construction all live INSIDE it. Responses use a `{ success: boolean, data?/error?, fields? }` envelope; validation failures return 422 with a `fields` map, auth failures 401, domain errors their status (404/409/400), unexpected errors 500.
+- **The wrapper** (`export const POST: APIRoute = (ctx) => runPost({ db, sdk: createPluginContext(), ctx })`) is a one-liner that constructs deps from the real `astro:db` / `pelerin:plugin-sdk` modules. It is NOT unit-tested.
 
-The dynamic imports (`await import(...)`) inside the wrapper keep the module importable in the Node test runner. The handler function is the testable surface; the wrapper is verified by structural assertions (readFileSync checks for `requireAdmin` and the export).
+Both `astro:db` and `pelerin:plugin-sdk` are imported at top level (NOT dynamically). The handler module stays importable under bare Node via a Node ESM loader hook: `tests/stubs/loader.mjs` redirects `astro:`/`pelerin:` specifiers to inert stub modules (`tests/stubs/astro-db.mjs`, `tests/stubs/plugin-sdk.mjs`), and `tests/stubs/register.mjs` exports `ensureLoader()` which each handler test calls before `await import(handler)`. The stubs are never exercised — `runMethod` receives real `db` (harness or poison-db) and a fake `sdk` (`makeFakeSdk`) via injection.
+
+Shared test infrastructure (ported verbatim from `../ecomm_plugin/`): `tests/api/helpers.ts` (`makeFakeSdk`, `makeCtx`, `poisonDb`, `unauthorizedError`, `forbiddenError`), `tests/api/handlers/_matrix.ts` (`adminAuthFail`/`validationFail`/`happyPath`/`errorWrap`), and per-handler test files under `tests/api/handlers/` (mirror the source tree with **bare param names** — `id.test.ts`, NOT `[id].test.ts`, because `node --test` treats `[`/`]` as a glob char class and silently skips bracket paths; `tests/api/no-bracket-paths.test.ts` enforces this).
 
 ---
 
@@ -130,7 +132,7 @@ In-memory libSQL database that creates all 4 tables from `schema.ts`. Provides:
 
 The harness `db` is the same Drizzle `LibSQLDatabase` type that `astro:db` provides in prod, so accessors behave identically in tests and prod.
 
-**Test command:** `find tests -name '*.test.ts' -print0 | xargs -0 node --test` (NOT `node --test tests/**/*.test.ts` — bash globstar is off by default and misses files).
+**Test command:** `node --test tests/full-suite.test.ts` — the canonical suite runner. It spawns `node --test <every Tier 1-3 file>` as a child, strips `NODE_TEST_CONTEXT`/`NODE_TEST_WORKER_ID` from the child env (without which the child runs as a nested worker — 0 tests, exit 0, a silent false green), and asserts `testCount >= N`. To run a single file during development: `node --test tests/api/handlers/rules/create.test.ts`. NOTE: dynamic-route test files use bare param names (`id.test.ts`, not `[id].test.ts`) because `node --test` treats `[`/`]` as a glob character class and silently skips bracket paths; `tests/api/no-bracket-paths.test.ts` guards this. When adding a test file, add its path to `TEST_FILES` in `tests/full-suite.test.ts` (the `testCount` guard catches mass silent skips, not individual omissions).
 
 ---
 
@@ -219,5 +221,5 @@ pelerin_notifications/
 1. **Read** this file and `reespec/decisions.md` before modifying code
 2. **Update** `schema.ts` whenever you change `config.ts` (the parity test will catch drift)
 3. **Test** accessors and handlers against the harness (`node --test`)
-4. **Run** the full suite: `find tests -name '*.test.ts' -print0 | xargs -0 node --test`
+4. **Run** the full suite: `node --test tests/full-suite.test.ts`
 5. **Manual smoke check**: `GET /api/plugins/notifications/rules` returns real rows; publish an event with `NOTIFICATIONS_DEV_MODE=true` and confirm a `notification_logs` row appears

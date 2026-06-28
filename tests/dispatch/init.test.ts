@@ -1,6 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
+
+/**
+ * Structural test — KNOWN BEHAVIORAL GAP.
+ *
+ * `src/init.ts` imports the real `astro:db` and the CMS event bus
+ * (`pelerin:plugin-sdk`), neither of which is importable under bare Node.
+ * We therefore read it as source and assert structural facts (the `*`
+ * subscription, the `dispatchEvent` call inside the subscriber) rather than
+ * exercising the runtime wiring. Runtime dispatch behaviour is covered by
+ * tests/dispatch/dispatch*.test.ts (which call `dispatchEvent` directly);
+ * the actual event-bus subscription is only verifiable end-to-end and is
+ * deferred to the Playwright E2E request.
+ */
 import init from '../../src/init.ts';
 
 test('init subscribes to * on the event bus and logs init message', () => {

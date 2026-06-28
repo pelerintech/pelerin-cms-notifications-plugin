@@ -3,47 +3,51 @@
  *
  * GET /api/plugins/notifications/rules
  * Query params: page, limit, search, active
- * Returns paginated list of notification rules.
+ * Returns a paginated list of notification rules.
+ *
+ * Uses the unified `runMethod({ db, sdk, ctx })` injection seam — auth, query
+ * parsing, and Response construction all live inside the tested `runGet`. The
+ * thin `GET` wrapper constructs deps from the real `astro:db` /
+ * `pelerin:plugin-sdk` modules and delegates.
  */
 import type { APIRoute } from 'astro';
-import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { createPluginContext } from 'pelerin:plugin-sdk';
+import { db } from 'astro:db';
+import type { HandlerDeps } from '../../../lib/handler-types';
 import { listRules } from '../../../lib/data/rules.ts';
 
-/** Handler: list rules with pagination and filters. Receives db directly. */
-export async function listRulesHandler(
-  db: LibSQLDatabase,
-  query: { page: number; limit: number; search?: string; active?: boolean }
-) {
-  const result = await listRules(db, query);
-  const totalPages = Math.max(1, Math.ceil(result.total / query.limit));
-  return {
-    status: 200,
-    body: {
-      data: result.data,
-      pagination: {
-        page: query.page,
-        limit: query.limit,
-        total: result.total,
-        totalPages,
-      },
-    },
-  };
-}
+export const GET: APIRoute = (context) =>
+  runGet({ db, sdk: createPluginContext(), ctx: context });
 
-export const GET: APIRoute = async (context) => {
-  const { createPluginContext } = await import('pelerin:plugin-sdk');
-  const sdk = createPluginContext();
-  await sdk.auth.requireAdmin(context.request);
-  const { db } = await import('astro:db');
-  const url = new URL(context.request.url);
-  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
-  const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)));
-  const search = url.searchParams.get('search') || undefined;
-  const activeParam = url.searchParams.get('active');
-  const active = activeParam !== null && activeParam !== '' ? activeParam === 'true' : undefined;
-  const result = await listRulesHandler(db, { page, limit, search, active });
-  return new Response(JSON.stringify(result.body), {
-    status: result.status,
+function json(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), {
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
-};
+}
+
+export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
+  try {
+    await sdk.auth.requireAdmin(ctx.request);
+    const url = new URL(ctx.request.url);
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '20', 10)));
+    const search = url.searchParams.get('search') || undefined;
+    const activeParam = url.searchParams.get('active');
+    const active = activeParam !== null && activeParam !== '' ? activeParam === 'true' : undefined;
+
+    const result = await listRules(db, { page, limit, search, active });
+    const totalPages = Math.max(1, Math.ceil(result.total / limit));
+    return json(
+      {
+        success: true,
+        data: result.data,
+        pagination: { page, limit, total: result.total, totalPages },
+      },
+      200,
+    );
+  } catch (err: any) {
+    const status = err.status ?? 500;
+    return json({ success: false, error: err.message || 'Server Error' }, status);
+  }
+}

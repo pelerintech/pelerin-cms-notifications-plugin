@@ -4,6 +4,8 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { db } from 'astro:db';
+import { listLogs } from '../../../lib/data/logs.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -17,23 +19,22 @@ const to = url.searchParams.get('to') || '';
 const status = url.searchParams.get('status') || '';
 const rule = url.searchParams.get('rule') || '';
 
-// Fetch logs from API
+// Read logs directly via the accessor (server-side fetch of our own admin-gated
+// API would 401 — the session cookie isn't forwarded).
 let logs = [];
 let total = 0;
 try {
-  const apiUrl = new URL('/api/plugins/notifications/logs', Astro.url);
-  apiUrl.searchParams.set('page', String(page));
-  apiUrl.searchParams.set('pageSize', String(pageSize));
-  if (provider) apiUrl.searchParams.set('provider', provider);
-  if (from) apiUrl.searchParams.set('from', from);
-  if (to) apiUrl.searchParams.set('to', to);
-  if (status) apiUrl.searchParams.set('status', status);
-  if (rule) apiUrl.searchParams.set('rule', rule);
-
-  const res = await fetch(apiUrl);
-  const data = await res.json();
-  logs = data.data || [];
-  total = data.total || 0;
+  const result = await listLogs(db, {
+    page,
+    pageSize,
+    provider: provider || undefined,
+    status: status === 'success' ? 'success' : status === 'failure' ? 'failure' : undefined,
+    rule: rule || undefined,
+    from: from ? new Date(from) : undefined,
+    to: to ? new Date(to) : undefined,
+  });
+  logs = result.data;
+  total = result.total;
 } catch {
   // Silently fail — empty list shown
 }
