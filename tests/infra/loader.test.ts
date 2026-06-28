@@ -7,13 +7,6 @@ test('ensureLoader() registers the loader hook (idempotent)', async () => {
   ensureLoader(); // second call must not throw
 });
 
-test('after ensureLoader(), importing astro:db resolves to the inert stub', async () => {
-  ensureLoader();
-  const mod = await import('astro:db');
-  assert.ok(mod, 'astro:db should resolve via the loader stub');
-  assert.ok('db' in mod || 'db' in (mod as object), 'astro:db stub must export db');
-});
-
 test('after ensureLoader(), importing pelerin:plugin-sdk resolves to the inert stub', async () => {
   ensureLoader();
   const mod = await import('pelerin:plugin-sdk');

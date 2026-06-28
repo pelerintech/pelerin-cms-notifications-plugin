@@ -4,7 +4,6 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import { listRules } from '../../../lib/data/rules.ts';
 import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
 
@@ -23,7 +22,7 @@ let rules = [];
 let pagination = { page: 1, limit: 20, total: 0, totalPages: 1 };
 try {
   const active = activeFilter !== null && activeFilter !== '' ? activeFilter === 'true' : undefined;
-  const result = await listRules(db, { page, limit, search: search || undefined, active });
+  const result = await listRules(sdk.db, { page, limit, search: search || undefined, active });
   rules = result.data;
   pagination = {
     page,
@@ -42,7 +41,7 @@ try {
 // is not in that set (unconfigured in prod, or unknown) gets the warning badge.
 const configuredProviders = new Set();
 try {
-  const result = await listAvailableProvidersHandler(db, 'email');
+  const result = await listAvailableProvidersHandler(sdk.db, 'email');
   for (const p of result.body.data) {
     if (p.configured) configuredProviders.add(p.name);
   }

@@ -3,7 +3,7 @@
  *
  * All DB access in the plugin goes through these functions. Each receives
  * `db: LibSQLDatabase` as its first parameter and imports table objects from
- * `src/db/schema.ts` (never from `astro:db`).
+ * `src/db/schema.ts`.
  */
 export {
   listRules,

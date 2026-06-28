@@ -4,7 +4,6 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import { getLog } from '../../../lib/data/logs.ts';
 
 const sdk = createPluginContext();
@@ -16,7 +15,7 @@ const id = Astro.params.id;
 // admin-gated API would 401 — the session cookie isn't forwarded).
 let logEntry = null;
 try {
-  logEntry = await getLog(db, id);
+  logEntry = await getLog(sdk.db, id);
   if (!logEntry) {
     return Astro.redirect('/admin/plugins/notifications/logs');
   }

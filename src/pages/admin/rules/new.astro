@@ -4,7 +4,6 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import { listTemplates } from '../../../lib/data/templates.ts';
 import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
 
@@ -13,10 +12,10 @@ const user = await sdk.auth.requireAdmin(Astro.request);
 
 // Read templates directly via the accessor (server-side fetch of our own
 // admin-gated API would 401 — the session cookie isn't forwarded). Matches the
-// ecomm_plugin page pattern and AGENTS.md §5 (pages obtain db from astro:db).
+// ecomm_plugin page pattern and AGENTS.md §5 (pages obtain db from sdk.db).
 let templates = [];
 try {
-  const result = await listTemplates(db, { page: 1, limit: 1000 });
+  const result = await listTemplates(sdk.db, { page: 1, limit: 1000 });
   templates = result.data;
 } catch {
   // Silently fail
@@ -27,7 +26,7 @@ try {
 // hardcoded `availableProviders` array that drifted out of sync with the registry.
 let availableProviders = [];
 try {
-  const result = await listAvailableProvidersHandler(db, 'email');
+  const result = await listAvailableProvidersHandler(sdk.db, 'email');
   availableProviders = result.body.data;
 } catch {
   // Silently fail — empty dropdown shown

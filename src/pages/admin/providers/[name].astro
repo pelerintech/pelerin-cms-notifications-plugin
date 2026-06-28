@@ -4,7 +4,6 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import { getSettingsHandler } from '../../../../api/notifications/providers/[name]/settings.ts';
 
 const sdk = createPluginContext();
@@ -65,7 +64,7 @@ const provider = providerConfigs[name];
 // admin-gated API would 401 — the session cookie isn't forwarded).
 let existingSettings = {};
 try {
-  const result = await getSettingsHandler(db, name);
+  const result = await getSettingsHandler(sdk.db, name);
   existingSettings = result.body.data;
 } catch {
   // Silently fail

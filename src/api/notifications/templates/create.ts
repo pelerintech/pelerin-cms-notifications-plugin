@@ -6,18 +6,19 @@
  *
  * Uses the unified `runMethod({ db, sdk, ctx })` injection seam — auth, body
  * parsing, validation, and Response construction all live inside the tested
- * `runPost`. The thin `POST` wrapper constructs deps from the real `astro:db` /
- * `pelerin:plugin-sdk` modules and delegates.
+ * `runPost`. The thin `POST` wrapper sources `db` from `createPluginContext().db`
+ * and delegates.
  */
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import type { HandlerDeps } from '../../../lib/handler-types';
 import { createTemplate } from '../../../lib/data/templates.ts';
 import { templateSchema } from '../../../schemas/template.schema.ts';
 
-export const POST: APIRoute = (context) =>
-  runPost({ db, sdk: createPluginContext(), ctx: context });
+export const POST: APIRoute = (context) => {
+  const sdk = createPluginContext();
+  return runPost({ db: sdk.db, sdk, ctx: context });
+};
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {

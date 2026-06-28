@@ -2,7 +2,7 @@
   "name": "pelerin_notifications",
   "displayName": "Notifications",
   "version": "1.0.0",
-  "dbConfig": "./src/db/config.ts",
+  "dbConfig": "./src/db/schema.ts",
   "dbSeed": "./src/db/seed.ts",
   "publicPages": [],
   "adminPages": [

@@ -4,7 +4,6 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import { listLogs } from '../../../lib/data/logs.ts';
 
 const sdk = createPluginContext();
@@ -24,7 +23,7 @@ const rule = url.searchParams.get('rule') || '';
 let logs = [];
 let total = 0;
 try {
-  const result = await listLogs(db, {
+  const result = await listLogs(sdk.db, {
     page,
     pageSize,
     provider: provider || undefined,

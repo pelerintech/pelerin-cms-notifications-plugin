@@ -11,12 +11,11 @@
  *
  * Uses the unified `runMethod({ db, sdk, ctx })` injection seam — auth, query
  * parsing, filtering, and Response construction all live inside the tested
- * `runGet`. The thin `GET` wrapper constructs deps from the real `astro:db` /
- * `pelerin:plugin-sdk` modules and delegates.
+ * `runGet`. The thin `GET` wrapper sources `db` from `createPluginContext().db`
+ * and delegates.
  */
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import type { HandlerDeps } from '../../../lib/handler-types';
 import { listProviderObjects } from '../../../providers/registry.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration
@@ -28,8 +27,10 @@ export interface AvailableProviderEntry {
   configured: boolean;
 }
 
-export const GET: APIRoute = (context) =>
-  runGet({ db, sdk: createPluginContext(), ctx: context });
+export const GET: APIRoute = (context) => {
+  const sdk = createPluginContext();
+  return runGet({ db: sdk.db, sdk, ctx: context });
+};
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {

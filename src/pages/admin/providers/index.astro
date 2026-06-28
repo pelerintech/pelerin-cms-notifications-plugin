@@ -22,12 +22,10 @@ const providers = [
 // (all required keys present + non-empty), replacing the former loose
 // `Object.keys(...).length > 0` (any key = configured) check. This makes
 // the card badge agree with the rule dropdown/guardrail by construction.
-const { db } = await import('astro:db');
-
 const configuredProviders = new Set();
 for (const provider of providers) {
   try {
-    if (await isProviderConfigured(db, provider.name)) {
+    if (await isProviderConfigured(sdk.db, provider.name)) {
       configuredProviders.add(provider.name);
     }
   } catch {

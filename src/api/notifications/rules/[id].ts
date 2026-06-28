@@ -6,23 +6,26 @@
  *
  * Uses the unified `runMethod({ db, sdk, ctx })` injection seam — auth, body
  * parsing, validation, the guardrail, and Response construction all live inside
- * the tested `runPut`/`runDelete`. The thin wrappers construct deps from the
- * real `astro:db` / `pelerin:plugin-sdk` modules and delegate.
+ * the tested `runPut`/`runDelete`. The thin wrappers source `db` from
+ * `createPluginContext().db` and delegate.
  */
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import type { HandlerDeps } from '../../../lib/handler-types';
 import { updateRule, deleteRule, getRule, RuleError } from '../../../lib/data/rules.ts';
 import { isProviderConfigured } from '../../../lib/data/providers.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration for isProviderConfigured
 import { ruleSchema } from '../../../schemas/rule.schema.ts';
 
-export const PUT: APIRoute = (context) =>
-  runPut({ db, sdk: createPluginContext(), ctx: context });
+export const PUT: APIRoute = (context) => {
+  const sdk = createPluginContext();
+  return runPut({ db: sdk.db, sdk, ctx: context });
+};
 
-export const DELETE: APIRoute = (context) =>
-  runDelete({ db, sdk: createPluginContext(), ctx: context });
+export const DELETE: APIRoute = (context) => {
+  const sdk = createPluginContext();
+  return runDelete({ db: sdk.db, sdk, ctx: context });
+};
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {

@@ -6,7 +6,7 @@
  * and returns a `LibSQLDatabase` instance that data accessors can query.
  *
  * The `db` returned here is the same Drizzle `LibSQLDatabase` type that
- * `astro:db` provides in prod, so accessors behave identically in tests and prod.
+ * the CMS provides in prod, so accessors behave identically in tests and prod.
  */
 import { drizzle } from 'drizzle-orm/libsql';
 import { sql } from 'drizzle-orm';

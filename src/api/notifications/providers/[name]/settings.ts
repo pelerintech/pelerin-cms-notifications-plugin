@@ -12,23 +12,25 @@
  * so pre-filled secrets are not overwritten.
  *
  * Uses the unified `runMethod({ db, sdk, ctx })` injection seam. The thin
- * wrappers construct deps from the real `astro:db` / `pelerin:plugin-sdk`
- * modules and delegate.
+ * wrappers source `db` from `createPluginContext().db` and delegate.
  */
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import type { HandlerDeps } from '../../../../lib/handler-types';
 import { encrypt, decryptIfNeeded } from '../../../../lib/crypto.ts';
 import { getSetting, setSetting, listSettingsForProvider } from '../../../../lib/data/settings.ts';
 import { getProvider } from '../../../../providers/registry.ts';
 import '../../../../providers/index.ts'; // trigger provider auto-registration
 
-export const GET: APIRoute = (context) =>
-  runGet({ db, sdk: createPluginContext(), ctx: context });
+export const GET: APIRoute = (context) => {
+  const sdk = createPluginContext();
+  return runGet({ db: sdk.db, sdk, ctx: context });
+};
 
-export const POST: APIRoute = (context) =>
-  runPost({ db, sdk: createPluginContext(), ctx: context });
+export const POST: APIRoute = (context) => {
+  const sdk = createPluginContext();
+  return runPost({ db: sdk.db, sdk, ctx: context });
+};
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {

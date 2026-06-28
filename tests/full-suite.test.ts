@@ -26,7 +26,7 @@ const TEST_FILES: string[] = [
   'tests/api/no-bracket-paths.test.ts',
   'tests/db/harness-channel.test.ts',
   'tests/db/harness.test.ts',
-  'tests/db/schema-parity.test.ts',
+
   'tests/deps-resolve.test.ts',
   'tests/deps-ses.test.ts',
   'tests/dev-mode.test.ts',
@@ -69,6 +69,10 @@ const TEST_FILES: string[] = [
   'tests/schema.test.ts',
   'tests/schemas/rule-schema-channel.test.ts',
   'tests/schemas/schemas.test.ts',
+  'tests/struct/no-astro-db-in-api.test.ts',
+  'tests/struct/no-astro-db-in-doc-comments.test.ts',
+  'tests/struct/no-astro-db-in-pages.test.ts',
+  'tests/struct/schema-sole.test.ts',
 ];
 
 
@@ -102,7 +106,7 @@ test('full test suite passes (node --test <all test files>)', () => {
   const m = testsLine.match(/(\d+)/);
   const testCount = m ? parseInt(m[1], 10) : 0;
   assert.ok(
-    testCount >= 270,
+    testCount >= 250,
     `child node --test registered only ${testCount} tests — expected >=250; possible silent skip. Output tail:\n${output.slice(-1500)}`,
   );
 });

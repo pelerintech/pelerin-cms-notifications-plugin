@@ -4,7 +4,6 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { db } from 'astro:db';
 import { listTemplates } from '../../../lib/data/templates.ts';
 import { listRules, getRule } from '../../../lib/data/rules.ts';
 import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
@@ -21,13 +20,13 @@ let rule = null;
 let templates = [];
 
 try {
-  rule = await getRule(db, id);
+  rule = await getRule(sdk.db, id);
 } catch {
   // Silently fail
 }
 
 try {
-  const result = await listTemplates(db, { page: 1, limit: 1000 });
+  const result = await listTemplates(sdk.db, { page: 1, limit: 1000 });
   templates = result.data;
 } catch {
   // Silently fail
@@ -39,7 +38,7 @@ try {
 let availableProviders = [];
 try {
   const channel = rule?.channel || 'email';
-  const result = await listAvailableProvidersHandler(db, channel);
+  const result = await listAvailableProvidersHandler(sdk.db, channel);
   availableProviders = result.body.data;
 } catch {
   // Silently fail — empty dropdown shown
