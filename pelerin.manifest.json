@@ -2,7 +2,7 @@
   "name": "pelerin_notifications",
   "displayName": "Notifications",
   "version": "1.0.0",
-  "dbConfig": "./src/db/config.ts",
+  "dbConfig": "./src/db/schema.ts",
   "dbSeed": "./src/db/seed.ts",
   "publicPages": [],
   "adminPages": [
@@ -20,6 +20,7 @@
   ],
   "apiEndpoints": [
     { "pattern": "/api/plugins/notifications/rules", "entrypoint": "./src/api/notifications/rules/index.ts" },
+    { "pattern": "/api/plugins/notifications/rules/providers", "entrypoint": "./src/api/notifications/rules/providers.ts" },
     { "pattern": "/api/plugins/notifications/rules/create", "entrypoint": "./src/api/notifications/rules/create.ts" },
     { "pattern": "/api/plugins/notifications/rules/[id]", "entrypoint": "./src/api/notifications/rules/[id].ts" },
     { "pattern": "/api/plugins/notifications/templates", "entrypoint": "./src/api/notifications/templates/index.ts" },

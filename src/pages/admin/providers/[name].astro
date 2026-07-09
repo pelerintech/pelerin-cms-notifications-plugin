@@ -4,6 +4,7 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { getSettingsHandler } from '../../../../api/notifications/providers/[name]/settings.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -59,12 +60,12 @@ const providerConfigs = {
 
 const provider = providerConfigs[name];
 
-// Fetch existing settings
+// Load existing settings directly via the handler (server-side fetch of our own
+// admin-gated API would 401 — the session cookie isn't forwarded).
 let existingSettings = {};
 try {
-  const res = await fetch(new URL(`/api/plugins/notifications/providers/${name}/settings`, Astro.url));
-  const data = await res.json();
-  existingSettings = data.data || {};
+  const result = await getSettingsHandler(sdk.db, name);
+  existingSettings = result.body.data;
 } catch {
   // Silently fail
 }
@@ -130,7 +131,8 @@ try {
       body[key] = value === 'on' ? 'true' : value;
     }
 
-    const res = await fetch(`/api/plugins/notifications/providers/${window.location.pathname.split('/').slice(-2, -1)[0]}/settings`, {
+    const providerName = window.location.pathname.split('/').pop();
+    const res = await fetch(`/api/plugins/notifications/providers/${providerName}/settings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

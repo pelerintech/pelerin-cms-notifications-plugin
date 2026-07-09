@@ -24,25 +24,11 @@ The plugin subscribes to CMS events on the event bus and dispatches notification
 
 ---
 
-## 3. Database (`src/db/config.ts` & `src/db/schema.ts`)
+## 3. Database (`src/db/schema.ts`)
 
-### Dual-definition pattern
+`src/db/schema.ts` is the sole schema definition. It uses pure Drizzle (`sqliteTable` from `drizzle-orm/sqlite-core`). The CMS loads it via the manifest's `dbConfig` and merges the table exports at build time. Data accessors in `src/lib/data/` import table objects from this file, so they are importable and executable in the test harness outside Astro.
 
-The schema is defined in **two** files that must stay in sync:
-
-- `src/db/config.ts` — uses `astro:db`'s `defineTable`/`defineDb`. Required by the CMS build (Astro DB merges these tables at build time). **Cannot be imported outside Astro** (the `astro:db` protocol is rejected by Node's loader).
-- `src/db/schema.ts` — pure Drizzle (`sqliteTable` from `drizzle-orm/sqlite-core`). Mirrors `config.ts` column-for-column. Data accessors import table objects **from this file only**, so they are importable and executable in the test harness outside Astro.
-
-A parity test (`tests/db/schema-parity.test.ts`) parses both files and fails on any column/type/optionality drift. **When you change `config.ts`, update `schema.ts` in the same commit.**
-
-### Type mapping (astro:db → drizzle-orm/sqlite-core)
-
-| astro:db | drizzle-orm/sqlite-core |
-|---|---|
-| `column.text()` | `text().notNull()` |
-| `column.text({ optional: true })` | `text()` |
-| `column.boolean()` | `integer({ mode: 'boolean' }).notNull()` |
-| `column.date({ mode: 'timestamp' })` | `dateType()` (custom TEXT ISO type, see schema.ts) |
+The `dateType` custom type (TEXT ISO, stored as ISO 8601 string) is used for all timestamp columns.
 
 ---
 
@@ -60,7 +46,7 @@ src/lib/data/
 ```
 
 **Rules:**
-- Table objects are imported from `src/db/schema.ts` (pure Drizzle), NEVER from `astro:db`.
+- Table objects are imported from `src/db/schema.ts` (pure Drizzle).
 - Accessors receive `db: LibSQLDatabase` as their first parameter. They never obtain `db` themselves.
 - Every accessor must have tests in `tests/lib/data/` against the real-SQLite test harness.
 
@@ -70,8 +56,8 @@ src/lib/data/
 
 There are exactly two entry points that obtain a `LibSQLDatabase` and pass it to accessors:
 
-1. **API endpoints** — `import { db } from 'astro:db'` (or `const { db } = await import('astro:db')` inside the wrapper function to keep the file importable in tests).
-2. **init.ts** — uses `ctx.db` from `createPluginContext()` (the SDK's `init` context).
+1. **API endpoints** — `const sdk = createPluginContext()` then `runX({ db: sdk.db, sdk, ctx })` (see §6). The tested `runMethod` receives `db` as an injected `HandlerDeps` param, so the wrapper is never exercised by unit tests.
+2. **init.ts** — uses `ctx.db` from the SDK's init context.
 
 Both pass `db` to accessor functions. No other code obtains `db`.
 
@@ -79,11 +65,13 @@ Both pass `db` to accessor functions. No other code obtains `db`.
 
 ## 6. Endpoint handler pattern (testable HTTP layer)
 
-Each endpoint file exports:
-- A **handler function** (e.g., `createRuleHandler(db, body)`) that receives `db` directly, performs zod validation, calls accessors, and returns `{ status, body }`. This is harness-tested — no Astro required.
-- A thin **Astro wrapper** (`export const POST: APIRoute`) that dynamically imports `astro:db` and `pelerin:plugin-sdk`, calls `requireAdmin`, delegates to the handler, and builds the `Response`.
+Each endpoint file exports a `runMethod({ db, sdk, ctx }: HandlerDeps): Promise<Response>` function and a thin Astro wrapper:
+- **`runMethod`** (the testable surface) receives `db`/`sdk`/`ctx` as injected deps. Auth (`sdk.auth.requireAdmin`), body/query parsing, zod validation, accessor calls, and full `Response` construction all live INSIDE it. Responses use a `{ success: boolean, data?/error?, fields? }` envelope; validation failures return 422 with a `fields` map, auth failures 401, domain errors their status (404/409/400), unexpected errors 500.
+- **The wrapper** (`export const POST: APIRoute = (context) => { const sdk = createPluginContext(); return runPost({ db: sdk.db, sdk, ctx: context }); }`) sources `db` from `sdk.db` via `createPluginContext()`. It is NOT unit-tested.
 
-The dynamic imports (`await import(...)`) inside the wrapper keep the module importable in the Node test runner. The handler function is the testable surface; the wrapper is verified by structural assertions (readFileSync checks for `requireAdmin` and the export).
+The handler module stays importable under bare Node via a Node ESM loader hook: `tests/stubs/loader.mjs` redirects `pelerin:` specifiers to inert stub modules (`tests/stubs/plugin-sdk.mjs`) and appends `.ts` to extension-less relative specifiers. `tests/stubs/register.mjs` exports `ensureLoader()` which each handler test calls before `await import(handler)`. The stub is never exercised — `runMethod` receives real `db` (harness or poison-db) and a fake `sdk` (`makeFakeSdk`) via injection.
+
+Shared test infrastructure (ported verbatim from `../ecomm_plugin/`): `tests/api/helpers.ts` (`makeFakeSdk`, `makeCtx`, `poisonDb`, `unauthorizedError`, `forbiddenError`), `tests/api/handlers/_matrix.ts` (`adminAuthFail`/`validationFail`/`happyPath`/`errorWrap`), and per-handler test files under `tests/api/handlers/` (mirror the source tree with **bare param names** — `id.test.ts`, NOT `[id].test.ts`, because `node --test` treats `[`/`]` as a glob char class and silently skips bracket paths; `tests/api/no-bracket-paths.test.ts` enforces this).
 
 ---
 
@@ -128,9 +116,9 @@ In-memory libSQL database that creates all 4 tables from `schema.ts`. Provides:
 - `insertFixture(db, tableName, row)` — single-row insert helper
 - `seedMinimal(db)` — inserts 1 template + 2 rules (exact `shop.order.created` + wildcard `shop.*`), returns stable IDs
 
-The harness `db` is the same Drizzle `LibSQLDatabase` type that `astro:db` provides in prod, so accessors behave identically in tests and prod.
+The harness `db` is the same Drizzle `LibSQLDatabase` type used in prod, so accessors behave identically in tests and prod.
 
-**Test command:** `find tests -name '*.test.ts' -print0 | xargs -0 node --test` (NOT `node --test tests/**/*.test.ts` — bash globstar is off by default and misses files).
+**Test command:** `node --test tests/full-suite.test.ts` — the canonical suite runner. It spawns `node --test <every Tier 1-3 file>` as a child, strips `NODE_TEST_CONTEXT`/`NODE_TEST_WORKER_ID` from the child env (without which the child runs as a nested worker — 0 tests, exit 0, a silent false green), and asserts `testCount >= N`. To run a single file during development: `node --test tests/api/handlers/rules/create.test.ts`. NOTE: dynamic-route test files use bare param names (`id.test.ts`, not `[id].test.ts`) because `node --test` treats `[`/`]` as a glob character class and silently skips bracket paths; `tests/api/no-bracket-paths.test.ts` guards this. When adding a test file, add its path to `TEST_FILES` in `tests/full-suite.test.ts` (the `testCount` guard catches mass silent skips, not individual omissions).
 
 ---
 
@@ -145,8 +133,7 @@ Controlled by the `NOTIFICATIONS_DEV_MODE` environment variable. When `"true"`, 
 ```json
 {
   "peerDependencies": {
-    "@astrojs/db": "^0.19.0",
-    "astro": "^5.17.2"
+    "astro": "^7.0.0"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.731.0",
@@ -155,7 +142,7 @@ Controlled by the `NOTIFICATIONS_DEV_MODE` environment variable. When `"true"`, 
 }
 ```
 
-`drizzle-orm` and `@libsql/client` come transitively from `@astrojs/db` (not direct deps). Node 25 strips TypeScript types natively — no build step needed for tests.
+`drizzle-orm` and `@libsql/client` come transitively from the CMS (not direct deps of this plugin). Node 25 strips TypeScript types natively — no build step needed for tests.
 
 `@aws-sdk/client-ses` is the **first AWS SDK in the CMS plugin ecosystem** (a direct runtime dependency of this plugin only, not a peer). It is dynamically imported inside `ses.send()` so it loads only when SES dispatches — plugin startup is not penalized for non-SES users.
 
@@ -187,8 +174,7 @@ pelerin_notifications/
 ├── AGENTS.md                   # This file
 ├── src/
 │   ├── db/
-│   │   ├── config.ts           # astro:db table definitions (CMS build)
-│   │   ├── schema.ts           # pure Drizzle schema (mirrors config.ts)
+│   │   ├── schema.ts           # sole Drizzle schema definition
 │   │   └── seed.ts             # no-op (rules/templates are admin-created)
 │   ├── lib/
 │   │   ├── data/               # accessors (rules, templates, logs, settings)
@@ -204,12 +190,13 @@ pelerin_notifications/
 │   ├── components/             # Breadcrumbs.astro, Pagination.astro
 │   └── pages/admin/            # admin UI (Astro, TS-native)
 └── tests/
-    ├── db/                     # harness + schema parity
+    ├── db/                     # harness
     ├── lib/data/               # accessor tests
     ├── api/                    # handler tests
     ├── dispatch/               # dispatch + init tests
     ├── providers/              # provider tests
-    └── ...                     # structural + conversion tests
+    ├── struct/                 # structural grep-guards
+    └── ...                     # other tests
 ```
 
 ---
@@ -217,7 +204,6 @@ pelerin_notifications/
 ## 14. Development workflow
 
 1. **Read** this file and `reespec/decisions.md` before modifying code
-2. **Update** `schema.ts` whenever you change `config.ts` (the parity test will catch drift)
-3. **Test** accessors and handlers against the harness (`node --test`)
-4. **Run** the full suite: `find tests -name '*.test.ts' -print0 | xargs -0 node --test`
-5. **Manual smoke check**: `GET /api/plugins/notifications/rules` returns real rows; publish an event with `NOTIFICATIONS_DEV_MODE=true` and confirm a `notification_logs` row appears
+2. **Test** accessors and handlers against the harness (`node --test`)
+3. **Run** the full suite: `node --test tests/full-suite.test.ts`
+4. **Manual smoke check**: `GET /api/plugins/notifications/rules` returns real rows; publish an event with `NOTIFICATIONS_DEV_MODE=true` and confirm a `notification_logs` row appears

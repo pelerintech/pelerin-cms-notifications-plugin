@@ -4,6 +4,8 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { listRules } from '../../../lib/data/rules.ts';
+import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -14,22 +16,37 @@ const limit = 20;
 const search = url.searchParams.get('search') || '';
 const activeFilter = url.searchParams.get('active');
 
-// Fetch rules from API
+// Read rules directly via the accessor (server-side fetch of our own admin-gated
+// API would 401 — the session cookie isn't forwarded). Matches ecomm + AGENTS.md §5.
 let rules = [];
 let pagination = { page: 1, limit: 20, total: 0, totalPages: 1 };
 try {
-  const apiUrl = new URL('/api/plugins/notifications/rules', Astro.url);
-  apiUrl.searchParams.set('page', String(page));
-  apiUrl.searchParams.set('limit', String(limit));
-  if (search) apiUrl.searchParams.set('search', search);
-  if (activeFilter) apiUrl.searchParams.set('active', activeFilter);
-
-  const res = await fetch(apiUrl);
-  const data = await res.json();
-  rules = data.data || [];
-  pagination = data.pagination || pagination;
+  const active = activeFilter !== null && activeFilter !== '' ? activeFilter === 'true' : undefined;
+  const result = await listRules(sdk.db, { page, limit, search: search || undefined, active });
+  rules = result.data;
+  pagination = {
+    page,
+    limit,
+    total: result.total,
+    totalPages: Math.max(1, Math.ceil(result.total / limit)),
+  };
 } catch {
   // Silently fail — empty list shown
+}
+
+// Compute configured-status per distinct provider (not per rule) to avoid
+// N×rules lookups. Uses the shared available-providers handler (registry-
+// derived, mode-aware) so the badge definition matches the dropdown/guardrail.
+// In dev mode the handler returns all real providers; a rule whose provider
+// is not in that set (unconfigured in prod, or unknown) gets the warning badge.
+const configuredProviders = new Set();
+try {
+  const result = await listAvailableProvidersHandler(sdk.db, 'email');
+  for (const p of result.body.data) {
+    if (p.configured) configuredProviders.add(p.name);
+  }
+} catch {
+  // Silently fail
 }
 ---
 
@@ -78,7 +95,12 @@ try {
               <tr>
                 <td><code class="bg-base-200 px-2 py-1 rounded text-sm">{rule.event_pattern}</code></td>
                 <td>{rule.template_id}</td>
-                <td><span class="badge badge-ghost">{rule.provider_name}</span></td>
+                <td>
+                  <span class="badge badge-ghost">{rule.provider_name}</span>
+                  {!configuredProviders.has(rule.provider_name) && (
+                    <span class="badge badge-error gap-1 ml-1">⚠ provider unconfigured</span>
+                  )}
+                </td>
                 <td>{rule.to}</td>
                 <td>
                   <span class={`badge ${rule.active ? 'badge-success' : 'badge-ghost'}`}>

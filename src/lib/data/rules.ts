@@ -9,6 +9,7 @@ export interface RuleRow {
   event_pattern: string;
   template_id: string;
   provider_name: string;
+  channel: string;
   to: string;
   cc: string | null;
   bcc: string | null;
@@ -43,6 +44,7 @@ export interface CreateRuleInput {
   event_pattern: string;
   template_id: string;
   provider_name: string;
+  channel?: string;
   to: string;
   cc?: string | null;
   bcc?: string | null;
@@ -91,21 +93,23 @@ export async function getRule(
   return (rows[0] as RuleRow | undefined) ?? null;
 }
 
-/** Create a rule. Throws RuleError code 'duplicate' if the (event_pattern, template_id, provider_name) triple already exists. */
+/** Create a rule. Throws RuleError code 'duplicate' if the (event_pattern, template_id, provider_name, channel) quadruple already exists. */
 export async function createRule(
   db: LibSQLDatabase,
   input: CreateRuleInput
 ): Promise<RuleRow> {
-  // Check for existing triple via SELECT before insert (matches ecomm's pattern).
+  const channel = input.channel ?? 'email';
+  // Check for existing quadruple via SELECT before insert (matches ecomm's pattern).
   const existing = await db.select({ id: notification_rules.id })
     .from(notification_rules)
     .where(and(
       eq(notification_rules.event_pattern, input.event_pattern),
       eq(notification_rules.template_id, input.template_id),
       eq(notification_rules.provider_name, input.provider_name),
+      eq(notification_rules.channel, channel),
     ));
   if (existing.length > 0) {
-    throw new RuleError('duplicate', 'Rule with this event_pattern, template_id, and provider_name already exists');
+    throw new RuleError('duplicate', 'Rule with this event_pattern, template_id, provider_name, and channel already exists');
   }
 
   const now = new Date();
@@ -115,6 +119,7 @@ export async function createRule(
     event_pattern: input.event_pattern,
     template_id: input.template_id,
     provider_name: input.provider_name,
+    channel,
     to: input.to,
     cc: input.cc ?? null,
     bcc: input.bcc ?? null,
@@ -140,6 +145,7 @@ export async function updateRule(
   if (input.event_pattern !== undefined) updates.event_pattern = input.event_pattern;
   if (input.template_id !== undefined) updates.template_id = input.template_id;
   if (input.provider_name !== undefined) updates.provider_name = input.provider_name;
+  if (input.channel !== undefined) updates.channel = input.channel;
   if (input.to !== undefined) updates.to = input.to;
   if (input.cc !== undefined) updates.cc = input.cc;
   if (input.bcc !== undefined) updates.bcc = input.bcc;

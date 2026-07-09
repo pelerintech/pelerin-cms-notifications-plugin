@@ -2,32 +2,40 @@
  * Log detail API endpoint.
  *
  * GET /api/plugins/notifications/logs/[id]
+ *
+ * Uses the unified `runMethod({ db, sdk, ctx })` injection seam — auth and
+ * Response construction all live inside the tested `runGet`. The thin `GET`
+ * wrapper sources `db` from `createPluginContext().db` and delegates.
  */
 import type { APIRoute } from 'astro';
-import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { createPluginContext } from 'pelerin:plugin-sdk';
+import type { HandlerDeps } from '../../../lib/handler-types';
 import { getLog } from '../../../lib/data/logs.ts';
 
-/** Handler: get a single log by id. Receives db directly so it is harness-testable. */
-export async function getLogHandler(
-  db: LibSQLDatabase,
-  id: string
-) {
-  const log = await getLog(db, id);
-  if (!log) {
-    return { status: 404, body: { error: 'Log not found' } };
-  }
-  return { status: 200, body: { data: log } };
-}
-
-export const GET: APIRoute = async (context) => {
-  const { createPluginContext } = await import('pelerin:plugin-sdk');
+export const GET: APIRoute = (context) => {
   const sdk = createPluginContext();
-  await sdk.auth.requireAdmin(context.request);
-  const { db } = await import('astro:db');
-  const { id } = context.params;
-  const result = await getLogHandler(db, id!);
-  return new Response(JSON.stringify(result.body), {
-    status: result.status,
+  return runGet({ db: sdk.db, sdk, ctx: context });
+};
+
+function json(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), {
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
-};
+}
+
+export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
+  try {
+    await sdk.auth.requireAdmin(ctx.request);
+    const id = ctx.params.id!;
+
+    const log = await getLog(db, id);
+    if (!log) {
+      return json({ success: false, error: 'Log not found' }, 404);
+    }
+    return json({ success: true, data: log }, 200);
+  } catch (err: any) {
+    const status = err.status ?? 500;
+    return json({ success: false, error: err.message || 'Server Error' }, status);
+  }
+}

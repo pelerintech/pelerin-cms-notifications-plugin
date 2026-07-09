@@ -4,6 +4,8 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { isProviderConfigured } from '../../../lib/data/providers.ts';
+import '../../../providers/index.ts'; // trigger provider auto-registration
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -16,17 +18,18 @@ const providers = [
   { name: 'brevo', label: 'Brevo', icon: '🔵', description: 'Brevo transactional email service' },
 ];
 
-// Check which providers have settings configured
+// Compute configured status via the shared `isProviderConfigured` accessor
+// (all required keys present + non-empty), replacing the former loose
+// `Object.keys(...).length > 0` (any key = configured) check. This makes
+// the card badge agree with the rule dropdown/guardrail by construction.
 const configuredProviders = new Set();
 for (const provider of providers) {
   try {
-    const res = await fetch(new URL(`/api/plugins/notifications/providers/${provider.name}/settings`, Astro.url));
-    const data = await res.json();
-    if (data.data && Object.keys(data.data).length > 0) {
+    if (await isProviderConfigured(sdk.db, provider.name)) {
       configuredProviders.add(provider.name);
     }
   } catch {
-    // Silently fail
+    // Silently fail — treat as not configured
   }
 }
 ---

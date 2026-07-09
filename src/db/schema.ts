@@ -1,33 +1,18 @@
 /**
  * Pure Drizzle schema for the pelerin_notifications plugin.
  *
- * This module is the forward-looking schema definition. It mirrors `./config.ts`
- * (which uses astro:db's defineTable for the CMS build) column-for-column.
- * Data accessors in `src/lib/data/` import table objects FROM THIS FILE, not from
- * `astro:db`, so they are importable and executable in the real-SQLite test harness
+ * This is the sole schema definition. The CMS loads it via the manifest's
+ * `dbConfig` and merges the `sqliteTable` exports at build time.
+ * Data accessors in `src/lib/data/` import table objects from this file,
+ * so they are importable and executable in the real-SQLite test harness
  * outside the Astro build.
- *
- * A parity test (`tests/db/schema-parity.test.ts`) guards drift between this file
- * and `config.ts`. When the future @astrojs/db → pure-Drizzle CMS migration lands,
- * `config.ts` is deleted and this file becomes the sole schema definition.
- *
- * Type mapping (astro:db → drizzle-orm/sqlite-core):
- *   column.text()                    → text().notNull()
- *   column.text({ optional: true })  → text()
- *   column.number()                  → integer().notNull()
- *   column.number({ optional })      → integer()
- *   column.boolean()                 → integer({ mode: 'boolean' }).notNull()
- *   column.boolean({ optional })     → integer({ mode: 'boolean' })
- *   column.date(...)                 → dateType()[.notNull()]  (TEXT ISO, matches astro:db)
  */
 import { sqliteTable, text, integer, customType } from 'drizzle-orm/sqlite-core';
 
 /**
- * Date column type mirroring astro:db's date customType exactly:
- * stored as TEXT (ISO 8601 string), converted to/from Date via toISOString / new Date.
- * This must match astro:db's `dateType` so that accessors using these table objects
- * read/write the same representation in the prod (astro:db-merged) database and in
- * the test harness.
+ * Date column type: stored as TEXT (ISO 8601 string), converted to/from
+ * Date via toISOString / new Date. Used for all timestamp columns in the
+ * notification plugin tables.
  */
 const dateType = customType<{
   data: Date;
@@ -56,6 +41,7 @@ export const notification_rules = sqliteTable('notification_rules', {
   event_pattern: text('event_pattern').notNull(),
   template_id: text('template_id').notNull(),
   provider_name: text('provider_name').notNull(),
+  channel: text('channel').notNull().default('email'),
   to: text('to').notNull(),
   cc: text('cc'),
   bcc: text('bcc'),

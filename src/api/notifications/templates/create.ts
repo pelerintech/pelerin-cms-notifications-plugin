@@ -3,34 +3,45 @@
  *
  * POST /api/plugins/notifications/templates
  * Body: { name, subject, body_html?, body_text? }
+ *
+ * Uses the unified `runMethod({ db, sdk, ctx })` injection seam — auth, body
+ * parsing, validation, and Response construction all live inside the tested
+ * `runPost`. The thin `POST` wrapper sources `db` from `createPluginContext().db`
+ * and delegates.
  */
 import type { APIRoute } from 'astro';
-import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { createPluginContext } from 'pelerin:plugin-sdk';
+import type { HandlerDeps } from '../../../lib/handler-types';
 import { createTemplate } from '../../../lib/data/templates.ts';
 import { templateSchema } from '../../../schemas/template.schema.ts';
 
-/** Handler: create a template. Receives db directly so it is harness-testable. */
-export async function createTemplateHandler(db: LibSQLDatabase, body: unknown) {
-  const result = templateSchema.safeParse(body);
-  if (!result.success) {
-    return {
-      status: 400,
-      body: { error: 'Validation failed', details: result.error.issues },
-    };
-  }
-  const template = await createTemplate(db, result.data);
-  return { status: 201, body: { data: template } };
-}
-
-export const POST: APIRoute = async (context) => {
-  const { createPluginContext } = await import('pelerin:plugin-sdk');
+export const POST: APIRoute = (context) => {
   const sdk = createPluginContext();
-  await sdk.auth.requireAdmin(context.request);
-  const { db } = await import('astro:db');
-  const body = await context.request.json();
-  const result = await createTemplateHandler(db, body);
-  return new Response(JSON.stringify(result.body), {
-    status: result.status,
+  return runPost({ db: sdk.db, sdk, ctx: context });
+};
+
+function json(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), {
+    status,
     headers: { 'Content-Type': 'application/json' },
   });
-};
+}
+
+export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
+  try {
+    await sdk.auth.requireAdmin(ctx.request);
+    const body = await ctx.request.json();
+
+    const result = templateSchema.safeParse(body);
+    if (!result.success) {
+      const fields = Object.fromEntries(result.error.issues.map((i) => [i.path.join('.'), i.message]));
+      return json({ success: false, error: 'Validation failed', fields }, 422);
+    }
+
+    const template = await createTemplate(db, result.data);
+    return json({ success: true, data: template }, 201);
+  } catch (err: any) {
+    const status = err.status ?? 500;
+    return json({ success: false, error: err.message || 'Server Error' }, status);
+  }
+}

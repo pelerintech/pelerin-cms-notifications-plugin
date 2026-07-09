@@ -6,7 +6,7 @@
  * and returns a `LibSQLDatabase` instance that data accessors can query.
  *
  * The `db` returned here is the same Drizzle `LibSQLDatabase` type that
- * `astro:db` provides in prod, so accessors behave identically in tests and prod.
+ * the CMS provides in prod, so accessors behave identically in tests and prod.
  */
 import { drizzle } from 'drizzle-orm/libsql';
 import { sql } from 'drizzle-orm';
@@ -133,6 +133,7 @@ export async function seedMinimal(db: LibSQLDatabase<typeof schema>): Promise<No
       event_pattern: 'shop.order.created',
       template_id: f.templateId,
       provider_name: 'sendgrid',
+      channel: 'email',
       to: '{{ customer_email }}',
       cc: null,
       bcc: null,
@@ -145,6 +146,7 @@ export async function seedMinimal(db: LibSQLDatabase<typeof schema>): Promise<No
       event_pattern: 'shop.*',
       template_id: f.templateId,
       provider_name: 'sendgrid',
+      channel: 'email',
       to: 'admin@example.com',
       cc: null,
       bcc: null,

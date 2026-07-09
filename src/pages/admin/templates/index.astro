@@ -4,6 +4,7 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { listTemplates } from '../../../lib/data/templates.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -13,18 +14,19 @@ const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
 const limit = 20;
 const search = url.searchParams.get('search') || '';
 
+// Read templates directly via the accessor (server-side fetch of our own
+// admin-gated API would 401 — the session cookie isn't forwarded).
 let templates = [];
 let pagination = { page: 1, limit: 20, total: 0, totalPages: 1 };
 try {
-  const apiUrl = new URL('/api/plugins/notifications/templates', Astro.url);
-  apiUrl.searchParams.set('page', String(page));
-  apiUrl.searchParams.set('limit', String(limit));
-  if (search) apiUrl.searchParams.set('search', search);
-
-  const res = await fetch(apiUrl);
-  const data = await res.json();
-  templates = data.data || [];
-  pagination = data.pagination || pagination;
+  const result = await listTemplates(sdk.db, { page, limit, search: search || undefined });
+  templates = result.data;
+  pagination = {
+    page,
+    limit,
+    total: result.total,
+    totalPages: Math.max(1, Math.ceil(result.total / limit)),
+  };
 } catch {
   // Silently fail
 }

@@ -3,7 +3,7 @@
  *
  * Re-exports registry functions for convenience.
  */
-export { registerProvider, getProvider, listProviders } from './registry.ts';
+export { registerProvider, getProvider, listProviders, listProviderObjects } from './registry.ts';
 export type { NotificationProvider, SendParams, SendResult, ProviderConfigSchema } from './interface.ts';
 
 // Import each provider module to trigger auto-registration

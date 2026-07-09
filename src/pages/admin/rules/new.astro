@@ -4,26 +4,47 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { listTemplates } from '../../../lib/data/templates.ts';
+import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
 
-// Fetch templates for dropdown
+// Read templates directly via the accessor (server-side fetch of our own
+// admin-gated API would 401 — the session cookie isn't forwarded). Matches the
+// ecomm_plugin page pattern and AGENTS.md §5 (pages obtain db from sdk.db).
 let templates = [];
 try {
-  const templatesRes = await fetch(new URL('/api/plugins/notifications/templates', Astro.url));
-  const templatesData = await templatesRes.json();
-  templates = templatesData.data || [];
+  const result = await listTemplates(sdk.db, { page: 1, limit: 1000 });
+  templates = result.data;
 } catch {
   // Silently fail
 }
 
-const availableProviders = [
-  { name: 'sendgrid', label: 'SendGrid' },
-  { name: 'mailgun', label: 'Mailgun' },
-  { name: 'ses', label: 'AWS SES' },
-  { name: 'smtp', label: 'SMTP' },
-];
+// Available providers (registry-derived, channel+configured-filtered,
+// local-excluded, mode-aware) via the handler directly. Replaces the former
+// hardcoded `availableProviders` array that drifted out of sync with the registry.
+let availableProviders = [];
+try {
+  const result = await listAvailableProvidersHandler(sdk.db, 'email');
+  availableProviders = result.body.data;
+} catch {
+  // Silently fail — empty dropdown shown
+}
+
+// UI-side label/icon map for provider display names. A provider missing from
+// this map renders as its raw `name` (visible degradation, not a silent
+// disappearance from the dropdown) so drift becomes observable.
+const providerLabels = {
+  sendgrid: 'SendGrid',
+  mailgun: 'Mailgun',
+  ses: 'AWS SES',
+  smtp: 'SMTP',
+  brevo: 'Brevo',
+};
+function providerLabel(name) {
+  return providerLabels[name] || name;
+}
 ---
 
 <AdminLayout title="New Rule" currentPath="/admin/plugins/notifications/rules/new" user={user}>
@@ -60,6 +81,17 @@ const availableProviders = [
         </select>
       </div>
 
+      {/* Channel */}
+      <div class="form-control mb-4">
+        <label class="label">
+          <span class="label-text font-medium">Channel</span>
+          <span class="label-text-alt text-base-content/50">Email today (SMS/push coming)</span>
+        </label>
+        <select name="channel" class="select select-bordered w-full" required>
+          <option value="email" selected>Email</option>
+        </select>
+      </div>
+
       {/* Provider */}
       <div class="form-control mb-4">
         <label class="label">
@@ -68,7 +100,7 @@ const availableProviders = [
         <select name="provider_name" class="select select-bordered w-full" required>
           <option disabled selected>Select a provider</option>
           {availableProviders.map((p) => (
-            <option value={p.name}>{p.label}</option>
+            <option value={p.name}>{providerLabel(p.name)}</option>
           ))}
         </select>
       </div>
