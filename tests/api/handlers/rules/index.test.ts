@@ -29,7 +29,9 @@ describe('runGet (rules/index) — auth + happy path with pagination', () => {
     try {
       await seedMinimal(db);
       const sdk = makeFakeSdk();
-      const ctx = makeCtx({ url: 'http://localhost/api/plugins/notifications/rules?page=1&limit=20' });
+      const ctx = makeCtx({
+        url: 'http://localhost/api/plugins/notifications/rules?page=1&limit=20',
+      });
       const res = await runGet({ db, sdk, ctx });
       assert.equal(res.status, 200, `expected 200, got ${res.status}`);
       const b = await res.json();

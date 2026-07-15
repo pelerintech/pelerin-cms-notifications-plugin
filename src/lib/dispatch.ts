@@ -21,7 +21,10 @@ function resolveRecipients(
 ): string[] {
   if (!recipientField) return [];
   const resolved = interpolate(recipientField, payload);
-  return resolved.split(',').map(s => s.trim()).filter(Boolean);
+  return resolved
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 /** Dispatch an event: find matching rules, resolve templates, send via provider, log the result. */
@@ -83,14 +86,17 @@ export async function dispatchEvent(
         continue;
       }
 
-      const result = await provider.send({
-        to,
-        cc,
-        bcc,
-        subject,
-        bodyHtml: bodyHtml ?? undefined,
-        bodyText: bodyText ?? undefined,
-      }, db);
+      const result = await provider.send(
+        {
+          to,
+          cc,
+          bcc,
+          subject,
+          bodyHtml: bodyHtml ?? undefined,
+          bodyText: bodyText ?? undefined,
+        },
+        db
+      );
 
       await createLog(db, {
         event_name: event,
@@ -103,7 +109,7 @@ export async function dispatchEvent(
         body_html: bodyHtml,
         body_text: bodyText,
         success: result.success,
-        error: result.success ? null : (result.error || null),
+        error: result.success ? null : result.error || null,
         message_id: result.messageId || null,
       });
     } catch (err) {

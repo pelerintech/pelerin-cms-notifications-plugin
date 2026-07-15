@@ -44,7 +44,8 @@ describe('runGet (logs/index) — auth + happy path with filters/pagination', ()
       await insertLog(db, { id: 'l1', provider_name: 'sendgrid' });
       await insertLog(db, { id: 'l2', provider_name: 'local' });
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/logs?page=1&pageSize=20' }),
       });
       assert.equal(res.status, 200, `expected 200, got ${res.status}`);
@@ -65,7 +66,8 @@ describe('runGet (logs/index) — auth + happy path with filters/pagination', ()
       await insertLog(db, { id: 'l1', provider_name: 'sendgrid' });
       await insertLog(db, { id: 'l2', provider_name: 'local' });
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/logs?provider=sendgrid' }),
       });
       const b = await res.json();
@@ -82,7 +84,8 @@ describe('runGet (logs/index) — auth + happy path with filters/pagination', ()
       await insertLog(db, { id: 'l1', success: true });
       await insertLog(db, { id: 'l2', success: false });
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/logs?status=failure' }),
       });
       const b = await res.json();

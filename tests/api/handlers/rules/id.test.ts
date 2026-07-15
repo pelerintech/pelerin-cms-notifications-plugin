@@ -64,7 +64,8 @@ describe('runPut (rules/[id]) — auth + 404 + happy + guardrail', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runPut({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api', body: { to: 'x' }, params: { id: 'missing' } }),
       });
       assert.equal(res.status, 404);
@@ -81,8 +82,13 @@ describe('runPut (rules/[id]) — auth + 404 + happy + guardrail', () => {
     try {
       const { exactRuleId } = await seedMinimal(db);
       const res = await runPut({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api', body: { to: 'new@example.com' }, params: { id: exactRuleId } }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api',
+          body: { to: 'new@example.com' },
+          params: { id: exactRuleId },
+        }),
       });
       assert.equal(res.status, 200);
       const b = await res.json();
@@ -100,8 +106,13 @@ describe('runPut (rules/[id]) — auth + 404 + happy + guardrail', () => {
       await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
       const id = await seedRule(db, 'sendgrid');
       const res = await runPut({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api', body: { provider_name: 'brevo' }, params: { id } }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api',
+          body: { provider_name: 'brevo' },
+          params: { id },
+        }),
       });
       assert.equal(res.status, 400);
       const b = await res.json();
@@ -123,8 +134,13 @@ describe('runPut (rules/[id]) — auth + 404 + happy + guardrail', () => {
       await setSetting(db, 'mailgun_api_key', encrypt('key-xxx'));
       const id = await seedRule(db, 'sendgrid');
       const res = await runPut({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api', body: { provider_name: 'mailgun' }, params: { id } }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api',
+          body: { provider_name: 'mailgun' },
+          params: { id },
+        }),
       });
       assert.equal(res.status, 200);
       const r = await getRule(db, id);
@@ -150,7 +166,8 @@ describe('runDelete (rules/[id]) — auth + 404 + happy', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runDelete({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api', params: { id: 'missing' } }),
       });
       assert.equal(res.status, 404);
@@ -167,7 +184,8 @@ describe('runDelete (rules/[id]) — auth + 404 + happy', () => {
     try {
       const { exactRuleId } = await seedMinimal(db);
       const res = await runDelete({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api', params: { id: exactRuleId } }),
       });
       assert.equal(res.status, 200);

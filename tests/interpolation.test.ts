@@ -7,7 +7,7 @@ describe('Template interpolation', () => {
     assert.strictEqual(
       interpolate('Hi {{ name }}', { name: 'John' }),
       'Hi John',
-      'should replace simple field',
+      'should replace simple field'
     );
   });
 
@@ -15,7 +15,7 @@ describe('Template interpolation', () => {
     assert.strictEqual(
       interpolate('Order {{ order.number }}', { order: { number: '123' } }),
       'Order 123',
-      'should replace nested field',
+      'should replace nested field'
     );
   });
 
@@ -23,7 +23,7 @@ describe('Template interpolation', () => {
     assert.strictEqual(
       interpolate('Hello {{ missing }}', {}),
       'Hello ',
-      'should replace missing field with empty string',
+      'should replace missing field with empty string'
     );
   });
 
@@ -31,7 +31,7 @@ describe('Template interpolation', () => {
     assert.strictEqual(
       interpolate('{{ a.b.c }}', { a: { b: { c: 'deep' } } }),
       'deep',
-      'should resolve deeply nested path',
+      'should resolve deeply nested path'
     );
   });
 });

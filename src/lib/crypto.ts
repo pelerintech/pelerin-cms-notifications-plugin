@@ -23,9 +23,7 @@ function getEncryptionKey(): Buffer {
     process.env.NOTIFICATIONS_ENCRYPTION_KEY;
 
   if (!raw) {
-    throw new Error(
-      '[crypto] No encryption key available. Set NOTIFICATIONS_ENCRYPTION_KEY.',
-    );
+    throw new Error('[crypto] No encryption key available. Set NOTIFICATIONS_ENCRYPTION_KEY.');
   }
 
   return deriveKey(raw);
@@ -36,10 +34,7 @@ export function encrypt(plaintext: string): string {
   const iv = crypto.randomBytes(IV_BYTES);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv) as crypto.CipherGCM;
 
-  const ciphertext = Buffer.concat([
-    cipher.update(plaintext, 'utf8'),
-    cipher.final(),
-  ]);
+  const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const authTag = cipher.getAuthTag();
 
   return `${iv.toString('hex')}:${authTag.toString('hex')}:${ciphertext.toString('hex')}`;

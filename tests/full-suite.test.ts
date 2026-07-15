@@ -75,7 +75,6 @@ const TEST_FILES: string[] = [
   'tests/struct/schema-sole.test.ts',
 ];
 
-
 test('full test suite passes (node --test <all test files>)', () => {
   // CRITICAL: strip NODE_TEST_CONTEXT / NODE_TEST_WORKER_ID from the child env.
   // `node --test` sets these on its own process; if the child `node --test`
@@ -101,12 +100,14 @@ test('full test suite passes (node --test <all test files>)', () => {
   // Guard against silent false greens: confirm the child actually registered
   // real tests. If this assertion ever fires, the child is skipping every file
   // (glob-bracket paths, env inheritance, or a loader regression).
-  const testsLine = output.split('\n').find((l) => /^# tests /.test(l)) ||
-    output.split('\n').find((l) => /^ℹ tests /.test(l)) || '';
+  const testsLine =
+    output.split('\n').find((l) => /^# tests /.test(l)) ||
+    output.split('\n').find((l) => /^ℹ tests /.test(l)) ||
+    '';
   const m = testsLine.match(/(\d+)/);
   const testCount = m ? parseInt(m[1], 10) : 0;
   assert.ok(
     testCount >= 250,
-    `child node --test registered only ${testCount} tests — expected >=250; possible silent skip. Output tail:\n${output.slice(-1500)}`,
+    `child node --test registered only ${testCount} tests — expected >=250; possible silent skip. Output tail:\n${output.slice(-1500)}`
   );
 });

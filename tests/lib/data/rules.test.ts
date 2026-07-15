@@ -1,7 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { createTestDb, insertFixture, seedMinimal } from '../../db/harness.ts';
-import { listRules, getRule, createRule, updateRule, deleteRule, findActiveRulesMatching } from '../../../src/lib/data/rules.ts';
+import {
+  listRules,
+  getRule,
+  createRule,
+  updateRule,
+  deleteRule,
+  findActiveRulesMatching,
+} from '../../../src/lib/data/rules.ts';
 
 test('listRules on empty db returns empty paginated result', async () => {
   const { db } = await createTestDb();
@@ -15,10 +22,22 @@ test('listRules returns rules ordered by created_at desc', async () => {
   const older = new Date('2026-01-01T00:00:00.000Z');
   const newer = new Date('2026-06-01T00:00:00.000Z');
   await insertFixture(db, 'notification_rules', {
-    id: 'r1', event_pattern: 'shop.order.created', template_id: 't', provider_name: 'p', to: 'a@b.com', active: true, created_at: older,
+    id: 'r1',
+    event_pattern: 'shop.order.created',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: true,
+    created_at: older,
   });
   await insertFixture(db, 'notification_rules', {
-    id: 'r2', event_pattern: 'cms.user.created', template_id: 't', provider_name: 'p', to: 'a@b.com', active: true, created_at: newer,
+    id: 'r2',
+    event_pattern: 'cms.user.created',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: true,
+    created_at: newer,
   });
   const result = await listRules(db, { page: 1, limit: 20 });
   assert.strictEqual(result.data.length, 2);
@@ -31,10 +50,22 @@ test('listRules with search filters by event_pattern', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_rules', {
-    id: 'r1', event_pattern: 'shop.order.created', template_id: 't', provider_name: 'p', to: 'a@b.com', active: true, created_at: now,
+    id: 'r1',
+    event_pattern: 'shop.order.created',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: true,
+    created_at: now,
   });
   await insertFixture(db, 'notification_rules', {
-    id: 'r2', event_pattern: 'cms.user.created', template_id: 't', provider_name: 'p', to: 'a@b.com', active: true, created_at: now,
+    id: 'r2',
+    event_pattern: 'cms.user.created',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: true,
+    created_at: now,
   });
   const result = await listRules(db, { page: 1, limit: 20, search: 'order' });
   assert.strictEqual(result.data.length, 1);
@@ -45,10 +76,22 @@ test('listRules with active filter returns only active rules', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_rules', {
-    id: 'r1', event_pattern: 'shop.order.created', template_id: 't', provider_name: 'p', to: 'a@b.com', active: true, created_at: now,
+    id: 'r1',
+    event_pattern: 'shop.order.created',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: true,
+    created_at: now,
   });
   await insertFixture(db, 'notification_rules', {
-    id: 'r2', event_pattern: 'cms.user.created', template_id: 't', provider_name: 'p', to: 'a@b.com', active: false, created_at: now,
+    id: 'r2',
+    event_pattern: 'cms.user.created',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: false,
+    created_at: now,
   });
   const result = await listRules(db, { page: 1, limit: 20, active: true });
   assert.strictEqual(result.data.length, 1);
@@ -59,10 +102,22 @@ test('listRules paginates with page and limit', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_rules', {
-    id: 'r1', event_pattern: 'a', template_id: 't', provider_name: 'p', to: 'a@b.com', active: true, created_at: now,
+    id: 'r1',
+    event_pattern: 'a',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: true,
+    created_at: now,
   });
   await insertFixture(db, 'notification_rules', {
-    id: 'r2', event_pattern: 'b', template_id: 't', provider_name: 'p', to: 'a@b.com', active: true, created_at: now,
+    id: 'r2',
+    event_pattern: 'b',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: true,
+    created_at: now,
   });
   const result = await listRules(db, { page: 2, limit: 1 });
   assert.strictEqual(result.data.length, 1);
@@ -107,12 +162,13 @@ test('createRule with a duplicate triple throws code duplicate', async () => {
     to: 'a@b.com',
   });
   await assert.rejects(
-    () => createRule(db, {
-      event_pattern: 'shop.order.created',
-      template_id: 't1',
-      provider_name: 'sendgrid',
-      to: 'c@d.com',
-    }),
+    () =>
+      createRule(db, {
+        event_pattern: 'shop.order.created',
+        template_id: 't1',
+        provider_name: 'sendgrid',
+        to: 'c@d.com',
+      }),
     (err: any) => err.code === 'duplicate'
   );
 });
@@ -161,7 +217,13 @@ test('findActiveRulesMatching excludes inactive rules', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_rules', {
-    id: 'r1', event_pattern: 'shop.*', template_id: 't', provider_name: 'p', to: 'a@b.com', active: false, created_at: now,
+    id: 'r1',
+    event_pattern: 'shop.*',
+    template_id: 't',
+    provider_name: 'p',
+    to: 'a@b.com',
+    active: false,
+    created_at: now,
   });
   const rules = await findActiveRulesMatching(db, 'shop.order.created');
   assert.deepStrictEqual(rules, []);

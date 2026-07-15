@@ -13,12 +13,18 @@ const { paths } = Astro.props;
 
 <div class="breadcrumbs text-sm">
   <ul>
-    {paths.map((item, index) => {
-      const isLast = index === paths.length - 1;
-      if (isLast || !item.href) {
-        return <li>{item.label}</li>;
-      }
-      return <li><a href={item.href}>{item.label}</a></li>;
-    })}
+    {
+      paths.map((item, index) => {
+        const isLast = index === paths.length - 1;
+        if (isLast || !item.href) {
+          return <li>{item.label}</li>;
+        }
+        return (
+          <li>
+            <a href={item.href}>{item.label}</a>
+          </li>
+        );
+      })
+    }
   </ul>
 </div>

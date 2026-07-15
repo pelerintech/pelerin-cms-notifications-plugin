@@ -44,18 +44,23 @@ const navCards = [
   <div class="col-span-12">
     {/* Navigation Cards Grid */}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl">
-      {navCards.map((card) => (
-        <a href={card.href} class={`card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow border-t-4 border-${card.color}`}>
-          <div class="card-body">
-            <div class="text-4xl mb-2">{card.icon}</div>
-            <h2 class="card-title text-lg">{card.title}</h2>
-            <p class="text-sm text-base-content/60">{card.description}</p>
-            <div class="card-actions justify-end mt-4">
-              <span class="btn btn-sm btn-{card.color}">Manage →</span>
+      {
+        navCards.map((card) => (
+          <a
+            href={card.href}
+            class={`card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow border-t-4 border-${card.color}`}
+          >
+            <div class="card-body">
+              <div class="text-4xl mb-2">{card.icon}</div>
+              <h2 class="card-title text-lg">{card.title}</h2>
+              <p class="text-sm text-base-content/60">{card.description}</p>
+              <div class="card-actions justify-end mt-4">
+                <span class="btn btn-sm btn-{card.color}">Manage →</span>
+              </div>
             </div>
-          </div>
-        </a>
-      ))}
+          </a>
+        ))
+      }
     </div>
   </div>
 </AdminLayout>

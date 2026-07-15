@@ -39,53 +39,52 @@ function getPageNumbers(current, total) {
 const pageNumbers = getPageNumbers(page, totalPages);
 ---
 
-{totalPages > 1 && (
-  <div class="flex justify-center items-center gap-2 mt-6">
-    {/* Prev button */}
-    {page > 1 && (
-      <a href={pageUrl(page - 1)} class="btn btn-sm">
-        ← Prev
-      </a>
-    )}
-    {page <= 1 && (
-      <button class="btn btn-sm btn-disabled" disabled>
-        ← Prev
-      </button>
-    )}
+{
+  totalPages > 1 && (
+    <div class="flex justify-center items-center gap-2 mt-6">
+      {/* Prev button */}
+      {page > 1 && (
+        <a href={pageUrl(page - 1)} class="btn btn-sm">
+          ← Prev
+        </a>
+      )}
+      {page <= 1 && (
+        <button class="btn btn-sm btn-disabled" disabled>
+          ← Prev
+        </button>
+      )}
 
-    {/* Page numbers */}
-    <div class="flex gap-1">
-      {pageNumbers.map((p) => {
-        if (p.ellipsis) {
-          return <span class="btn btn-sm btn-disabled">…</span>;
-        }
-        const isActive = p.num === page;
-        return (
-          <a
-            href={pageUrl(p.num)}
-            class={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-ghost'}`}
-          >
-            {p.num}
-          </a>
-        );
-      })}
+      {/* Page numbers */}
+      <div class="flex gap-1">
+        {pageNumbers.map((p) => {
+          if (p.ellipsis) {
+            return <span class="btn btn-sm btn-disabled">…</span>;
+          }
+          const isActive = p.num === page;
+          return (
+            <a href={pageUrl(p.num)} class={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-ghost'}`}>
+              {p.num}
+            </a>
+          );
+        })}
+      </div>
+
+      {/* Next button */}
+      {page < totalPages && (
+        <a href={pageUrl(page + 1)} class="btn btn-sm">
+          Next →
+        </a>
+      )}
+      {page >= totalPages && (
+        <button class="btn btn-sm btn-disabled" disabled>
+          Next →
+        </button>
+      )}
+
+      {/* Page info */}
+      <span class="text-sm text-base-content/50 ml-2">
+        Page {page} of {totalPages} ({total} total)
+      </span>
     </div>
-
-    {/* Next button */}
-    {page < totalPages && (
-      <a href={pageUrl(page + 1)} class="btn btn-sm">
-        Next →
-      </a>
-    )}
-    {page >= totalPages && (
-      <button class="btn btn-sm btn-disabled" disabled>
-        Next →
-      </button>
-    )}
-
-    {/* Page info */}
-    <span class="text-sm text-base-content/50 ml-2">
-      Page {page} of {totalPages} ({total} total)
-    </span>
-  </div>
-)}
+  )
+}

@@ -50,8 +50,15 @@ describe('SES provider send (mocked client factory)', () => {
     });
 
     const result = await ses.send(
-      { to: ['a@b.com'], cc: ['c@d.com'], bcc: ['e@f.com'], subject: 'Subj', bodyHtml: '<p>h</p>', bodyText: 't' },
-      db,
+      {
+        to: ['a@b.com'],
+        cc: ['c@d.com'],
+        bcc: ['e@f.com'],
+        subject: 'Subj',
+        bodyHtml: '<p>h</p>',
+        bodyText: 't',
+      },
+      db
     );
 
     assert.strictEqual(result.success, true);
@@ -117,7 +124,9 @@ describe('SES provider send (mocked client factory)', () => {
 
     setSesClientFactory(() => ({
       send: async () => {
-        throw new Error('Email address is not verified. The following identities failed the check in region us-east-1: a@b.com');
+        throw new Error(
+          'Email address is not verified. The following identities failed the check in region us-east-1: a@b.com'
+        );
       },
     }));
 
@@ -125,7 +134,7 @@ describe('SES provider send (mocked client factory)', () => {
     assert.strictEqual(result.success, false);
     assert.strictEqual(
       result.error,
-      'SES send failed: Email address is not verified. The following identities failed the check in region us-east-1: a@b.com',
+      'SES send failed: Email address is not verified. The following identities failed the check in region us-east-1: a@b.com'
     );
   });
 

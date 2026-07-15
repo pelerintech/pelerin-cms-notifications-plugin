@@ -42,7 +42,7 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
         data: result.data,
         pagination: { page, limit, total: result.total, totalPages },
       },
-      200,
+      200
     );
   } catch (err: any) {
     const status = err.status ?? 500;

@@ -32,7 +32,7 @@ test('no handler file imports from astro:db', () => {
   assert.deepStrictEqual(
     offenders,
     [],
-    `These handler files still import from astro:db: ${offenders.join(', ')}`,
+    `These handler files still import from astro:db: ${offenders.join(', ')}`
   );
 });
 
@@ -43,7 +43,12 @@ test('each handler wrapper sources db from sdk.db', () => {
   for (const file of files) {
     const source = readFileSync(join(API_DIR, file), 'utf-8');
     // Each handler file should have sdk.db in its wrapper
-    if (source.includes('runGet') || source.includes('runPost') || source.includes('runPut') || source.includes('runDelete')) {
+    if (
+      source.includes('runGet') ||
+      source.includes('runPost') ||
+      source.includes('runPut') ||
+      source.includes('runDelete')
+    ) {
       if (!source.includes('sdk.db')) {
         missing.push(file);
       }
@@ -53,6 +58,6 @@ test('each handler wrapper sources db from sdk.db', () => {
   assert.deepStrictEqual(
     missing,
     [],
-    `These handler files don't source db from sdk.db: ${missing.join(', ')}`,
+    `These handler files don't source db from sdk.db: ${missing.join(', ')}`
   );
 });

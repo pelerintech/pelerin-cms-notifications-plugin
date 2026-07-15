@@ -21,10 +21,20 @@ test('listTemplates returns templates ordered by created_at desc', async () => {
   const older = new Date('2026-01-01T00:00:00.000Z');
   const newer = new Date('2026-06-01T00:00:00.000Z');
   await insertFixture(db, 'notification_templates', {
-    id: 't1', name: 'Order Confirmation', subject: 's1', body_html: null, body_text: null, created_at: older,
+    id: 't1',
+    name: 'Order Confirmation',
+    subject: 's1',
+    body_html: null,
+    body_text: null,
+    created_at: older,
   });
   await insertFixture(db, 'notification_templates', {
-    id: 't2', name: 'Shipping Notice', subject: 's2', body_html: null, body_text: null, created_at: newer,
+    id: 't2',
+    name: 'Shipping Notice',
+    subject: 's2',
+    body_html: null,
+    body_text: null,
+    created_at: newer,
   });
   const result = await listTemplates(db, { page: 1, limit: 20 });
   assert.strictEqual(result.data.length, 2);
@@ -36,10 +46,20 @@ test('listTemplates with search filters by name', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_templates', {
-    id: 't1', name: 'Order Confirmation', subject: 's1', body_html: null, body_text: null, created_at: now,
+    id: 't1',
+    name: 'Order Confirmation',
+    subject: 's1',
+    body_html: null,
+    body_text: null,
+    created_at: now,
   });
   await insertFixture(db, 'notification_templates', {
-    id: 't2', name: 'Shipping Notice', subject: 's2', body_html: null, body_text: null, created_at: now,
+    id: 't2',
+    name: 'Shipping Notice',
+    subject: 's2',
+    body_html: null,
+    body_text: null,
+    created_at: now,
   });
   const result = await listTemplates(db, { page: 1, limit: 20, search: 'ship' });
   assert.strictEqual(result.data.length, 1);
@@ -50,10 +70,20 @@ test('listTemplates paginates', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_templates', {
-    id: 't1', name: 'A', subject: 's', body_html: null, body_text: null, created_at: now,
+    id: 't1',
+    name: 'A',
+    subject: 's',
+    body_html: null,
+    body_text: null,
+    created_at: now,
   });
   await insertFixture(db, 'notification_templates', {
-    id: 't2', name: 'B', subject: 's', body_html: null, body_text: null, created_at: now,
+    id: 't2',
+    name: 'B',
+    subject: 's',
+    body_html: null,
+    body_text: null,
+    created_at: now,
   });
   const result = await listTemplates(db, { page: 2, limit: 1 });
   assert.strictEqual(result.data.length, 1);

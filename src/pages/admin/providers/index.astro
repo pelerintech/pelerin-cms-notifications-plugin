@@ -12,7 +12,12 @@ const user = await sdk.auth.requireAdmin(Astro.request);
 
 const providers = [
   { name: 'sendgrid', label: 'SendGrid', icon: '✉️', description: 'SendGrid email delivery API' },
-  { name: 'mailgun', label: 'Mailgun', icon: '📧', description: 'Mailgun transactional email service' },
+  {
+    name: 'mailgun',
+    label: 'Mailgun',
+    icon: '📧',
+    description: 'Mailgun transactional email service',
+  },
   { name: 'ses', label: 'AWS SES', icon: '☁️', description: 'Amazon Simple Email Service' },
   { name: 'smtp', label: 'SMTP', icon: '📮', description: 'Direct SMTP server connection' },
   { name: 'brevo', label: 'Brevo', icon: '🔵', description: 'Brevo transactional email service' },
@@ -40,27 +45,32 @@ for (const provider of providers) {
 
     {/* Provider Cards Grid */}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
-      {providers.map((provider) => {
-        const isConfigured = configuredProviders.has(provider.name);
-        return (
-          <a href={`/admin/plugins/notifications/providers/${provider.name}`} class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-            <div class="card-body">
-              <div class="flex items-center gap-3">
-                <span class="text-3xl">{provider.icon}</span>
-                <div>
-                  <h2 class="card-title text-lg">{provider.label}</h2>
-                  <p class="text-sm text-base-content/60">{provider.description}</p>
+      {
+        providers.map((provider) => {
+          const isConfigured = configuredProviders.has(provider.name);
+          return (
+            <a
+              href={`/admin/plugins/notifications/providers/${provider.name}`}
+              class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow"
+            >
+              <div class="card-body">
+                <div class="flex items-center gap-3">
+                  <span class="text-3xl">{provider.icon}</span>
+                  <div>
+                    <h2 class="card-title text-lg">{provider.label}</h2>
+                    <p class="text-sm text-base-content/60">{provider.description}</p>
+                  </div>
+                </div>
+                <div class="card-actions justify-end mt-2">
+                  <span class={`badge ${isConfigured ? 'badge-success' : 'badge-warning'} gap-1`}>
+                    {isConfigured ? '✓ Configured' : '⚠ Not configured'}
+                  </span>
                 </div>
               </div>
-              <div class="card-actions justify-end mt-2">
-                <span class={`badge ${isConfigured ? 'badge-success' : 'badge-warning'} gap-1`}>
-                  {isConfigured ? '✓ Configured' : '⚠ Not configured'}
-                </span>
-              </div>
-            </div>
-          </a>
-        );
-      })}
+            </a>
+          );
+        })
+      }
     </div>
   </div>
 </AdminLayout>

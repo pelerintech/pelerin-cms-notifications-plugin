@@ -49,8 +49,11 @@ describe('runGet (rules/providers) — auth + dev/prod filtering', () => {
     try {
       await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email' }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email',
+        }),
       });
       assert.equal(res.status, 200);
       const b = await res.json();
@@ -69,8 +72,11 @@ describe('runGet (rules/providers) — auth + dev/prod filtering', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email' }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email',
+        }),
       });
       const b = await res.json();
       assert.deepStrictEqual(b.data, []);
@@ -84,8 +90,11 @@ describe('runGet (rules/providers) — auth + dev/prod filtering', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email' }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email',
+        }),
       });
       const b = await res.json();
       const n = b.data.map((p: any) => p.name).sort();
@@ -106,8 +115,11 @@ describe('runGet (rules/providers) — auth + dev/prod filtering', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/rules/providers?channel=sms' }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api/plugins/notifications/rules/providers?channel=sms',
+        }),
       });
       const b = await res.json();
       assert.deepStrictEqual(b.data, []);
@@ -122,8 +134,11 @@ describe('runGet (rules/providers) — auth + dev/prod filtering', () => {
     try {
       await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email' }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api/plugins/notifications/rules/providers?channel=email',
+        }),
       });
       const b = await res.json();
       const sg = b.data.find((p: any) => p.name === 'sendgrid');

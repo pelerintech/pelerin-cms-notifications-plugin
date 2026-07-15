@@ -5,7 +5,12 @@
  * Auto-registers with the provider registry on import.
  */
 import { registerProvider } from './registry.ts';
-import type { NotificationProvider, SendParams, SendResult, ProviderConfigSchema } from './interface.ts';
+import type {
+  NotificationProvider,
+  SendParams,
+  SendResult,
+  ProviderConfigSchema,
+} from './interface.ts';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { getSetting } from '../lib/data/settings.ts';
 import { decryptIfNeeded } from '../lib/crypto.ts';
@@ -70,7 +75,7 @@ export const mailgunProvider: NotificationProvider = {
       const response = await fetch(`${apiUrl}/messages`, {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${Buffer.from(`api:${apiKey}`).toString('base64')}`,
+          Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString('base64')}`,
         },
         body: formData,
       });
@@ -80,7 +85,7 @@ export const mailgunProvider: NotificationProvider = {
         return { success: false, error: `Mailgun API error (${response.status}): ${errorBody}` };
       }
 
-      const data = await response.json() as { id?: string };
+      const data = (await response.json()) as { id?: string };
       const messageId = data.id;
       return { success: true, messageId };
     } catch (err: any) {

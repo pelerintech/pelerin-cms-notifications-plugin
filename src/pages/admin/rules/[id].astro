@@ -87,9 +87,13 @@ function providerLabel(name) {
         </label>
         <select name="template_id" class="select select-bordered w-full" required>
           <option disabled selected={!rule?.template_id}>Select a template</option>
-          {templates.map((t) => (
-            <option value={t.id} selected={rule?.template_id === t.id}>{t.name}</option>
-          ))}
+          {
+            templates.map((t) => (
+              <option value={t.id} selected={rule?.template_id === t.id}>
+                {t.name}
+              </option>
+            ))
+          }
         </select>
       </div>
 
@@ -110,9 +114,13 @@ function providerLabel(name) {
         </label>
         <select name="provider_name" class="select select-bordered w-full" required>
           <option disabled selected={!rule?.provider_name}>Select a provider</option>
-          {availableProviders.map((p) => (
-            <option value={p.name} selected={rule?.provider_name === p.name}>{providerLabel(p.name)}</option>
-          ))}
+          {
+            availableProviders.map((p) => (
+              <option value={p.name} selected={rule?.provider_name === p.name}>
+                {providerLabel(p.name)}
+              </option>
+            ))
+          }
         </select>
       </div>
 
@@ -134,38 +142,35 @@ function providerLabel(name) {
         <label class="label">
           <span class="label-text font-medium">CC (optional)</span>
         </label>
-        <input
-          type="text"
-          name="cc"
-          class="input input-bordered w-full"
-          value={rule?.cc || ''}
-        />
+        <input type="text" name="cc" class="input input-bordered w-full" value={rule?.cc || ''} />
       </div>
 
       <div class="form-control mb-4">
         <label class="label">
           <span class="label-text font-medium">BCC (optional)</span>
         </label>
-        <input
-          type="text"
-          name="bcc"
-          class="input input-bordered w-full"
-          value={rule?.bcc || ''}
-        />
+        <input type="text" name="bcc" class="input input-bordered w-full" value={rule?.bcc || ''} />
       </div>
 
       {/* Active toggle */}
       <div class="form-control mb-6">
         <label class="label cursor-pointer">
           <span class="label-text font-medium">Active</span>
-          <input type="checkbox" name="active" class="toggle toggle-success" checked={rule?.active ?? false} />
+          <input
+            type="checkbox"
+            name="active"
+            class="toggle toggle-success"
+            checked={rule?.active ?? false}
+          />
         </label>
       </div>
 
       {/* Actions */}
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href={`/admin/plugins/notifications/rules?page=${returnPage}`} class="btn btn-ghost">Cancel</a>
+        <a href={`/admin/plugins/notifications/rules?page=${returnPage}`} class="btn btn-ghost"
+          >Cancel</a
+        >
         <button type="button" class="btn btn-error btn-sm ml-auto" id="delete-btn">Delete</button>
       </div>
     </form>
@@ -180,11 +185,14 @@ function providerLabel(name) {
     body.active = body.active === 'on';
     delete body._method;
 
-    const res = await fetch(`/api/plugins/notifications/rules/${window.location.pathname.split('/').pop()}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const res = await fetch(
+      `/api/plugins/notifications/rules/${window.location.pathname.split('/').pop()}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
 
     if (res.ok) {
       window.location.href = `/admin/plugins/notifications/rules?page=${new URLSearchParams(window.location.search).get('page') || '1'}`;

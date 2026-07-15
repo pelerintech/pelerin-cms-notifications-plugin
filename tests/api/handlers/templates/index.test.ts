@@ -21,8 +21,11 @@ describe('runGet (templates/index) — auth + happy path with pagination', () =>
     try {
       await seedMinimal(db);
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/templates?page=1&limit=20' }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api/plugins/notifications/templates?page=1&limit=20',
+        }),
       });
       assert.equal(res.status, 200, `expected 200, got ${res.status}`);
       const b = await res.json();
@@ -41,7 +44,8 @@ describe('runGet (templates/index) — auth + happy path with pagination', () =>
     try {
       await seedMinimal(db);
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api/plugins/notifications/templates?search=Order' }),
       });
       const b = await res.json();

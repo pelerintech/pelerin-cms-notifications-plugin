@@ -57,7 +57,9 @@ function providerLabel(name) {
       <div class="form-control mb-4">
         <label class="label">
           <span class="label-text font-medium">Event Pattern</span>
-          <span class="label-text-alt text-base-content/50">e.g., shop.order.created, shop.*, *</span>
+          <span class="label-text-alt text-base-content/50"
+            >e.g., shop.order.created, shop.*, *</span
+          >
         </label>
         <input
           type="text"
@@ -75,9 +77,7 @@ function providerLabel(name) {
         </label>
         <select name="template_id" class="select select-bordered w-full" required>
           <option disabled selected>Select a template</option>
-          {templates.map((t) => (
-            <option value={t.id}>{t.name}</option>
-          ))}
+          {templates.map((t) => <option value={t.id}>{t.name}</option>)}
         </select>
       </div>
 
@@ -99,9 +99,7 @@ function providerLabel(name) {
         </label>
         <select name="provider_name" class="select select-bordered w-full" required>
           <option disabled selected>Select a provider</option>
-          {availableProviders.map((p) => (
-            <option value={p.name}>{providerLabel(p.name)}</option>
-          ))}
+          {availableProviders.map((p) => <option value={p.name}>{providerLabel(p.name)}</option>)}
         </select>
       </div>
 
@@ -109,12 +107,14 @@ function providerLabel(name) {
       <div class="form-control mb-4">
         <label class="label">
           <span class="label-text font-medium">To</span>
-          <span class="label-text-alt text-base-content/50">Email or &#123;&#123; field &#125;&#125;</span>
+          <span class="label-text-alt text-base-content/50"
+            >Email or &#123;&#123; field &#125;&#125;</span
+          >
         </label>
         <input
           type="text"
           name="to"
-          placeholder="customer@example.com or &#123;&#123; customer_email &#125;&#125;"
+          placeholder="customer@example.com or {{ customer_email }}"
           class="input input-bordered w-full"
           required
         />

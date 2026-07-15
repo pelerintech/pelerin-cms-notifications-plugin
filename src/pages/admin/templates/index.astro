@@ -52,59 +52,82 @@ try {
     </div>
 
     {/* Templates Table */}
-    {templates.length === 0 ? (
-      <p class="text-base-content/60">No templates found.</p>
-    ) : (
-      <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Subject</th>
-              <th>Has HTML</th>
-              <th>Has Text</th>
-              <th>Created</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {templates.map((t) => (
+    {
+      templates.length === 0 ? (
+        <p class="text-base-content/60">No templates found.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
               <tr>
-                <td class="font-medium">{t.name}</td>
-                <td class="max-w-xs truncate" title={t.subject}>{t.subject}</td>
-                <td>
-                  <span class={`badge badge-sm ${t.body_html ? 'badge-success' : 'badge-ghost'}`}>
-                    {t.body_html ? 'Yes' : 'No'}
-                  </span>
-                </td>
-                <td>
-                  <span class={`badge badge-sm ${t.body_text ? 'badge-success' : 'badge-ghost'}`}>
-                    {t.body_text ? 'Yes' : 'No'}
-                  </span>
-                </td>
-                <td>{new Date(t.created_at).toLocaleDateString()}</td>
-                <td>
-                  <a href={`/admin/plugins/notifications/templates/${t.id}`} class="btn btn-ghost btn-xs">Edit</a>
-                </td>
+                <th>Name</th>
+                <th>Subject</th>
+                <th>Has HTML</th>
+                <th>Has Text</th>
+                <th>Created</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
+            </thead>
+            <tbody>
+              {templates.map((t) => (
+                <tr>
+                  <td class="font-medium">{t.name}</td>
+                  <td class="max-w-xs truncate" title={t.subject}>
+                    {t.subject}
+                  </td>
+                  <td>
+                    <span class={`badge badge-sm ${t.body_html ? 'badge-success' : 'badge-ghost'}`}>
+                      {t.body_html ? 'Yes' : 'No'}
+                    </span>
+                  </td>
+                  <td>
+                    <span class={`badge badge-sm ${t.body_text ? 'badge-success' : 'badge-ghost'}`}>
+                      {t.body_text ? 'Yes' : 'No'}
+                    </span>
+                  </td>
+                  <td>{new Date(t.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <a
+                      href={`/admin/plugins/notifications/templates/${t.id}`}
+                      class="btn btn-ghost btn-xs"
+                    >
+                      Edit
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
 
     {/* Pagination */}
-    {pagination.totalPages > 1 && (
-      <div class="flex justify-center mt-6 gap-2">
-        {pagination.page > 1 && (
-          <a href={`?page=${pagination.page - 1}${search ? `&search=${search}` : ''}`} class="btn btn-sm">← Prev</a>
-        )}
-        <span class="btn btn-sm btn-disabled">Page {pagination.page} of {pagination.totalPages}</span>
-        {pagination.page < pagination.totalPages && (
-          <a href={`?page=${pagination.page + 1}${search ? `&search=${search}` : ''}`} class="btn btn-sm">Next →</a>
-        )}
-      </div>
-    )}
+    {
+      pagination.totalPages > 1 && (
+        <div class="flex justify-center mt-6 gap-2">
+          {pagination.page > 1 && (
+            <a
+              href={`?page=${pagination.page - 1}${search ? `&search=${search}` : ''}`}
+              class="btn btn-sm"
+            >
+              ← Prev
+            </a>
+          )}
+          <span class="btn btn-sm btn-disabled">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          {pagination.page < pagination.totalPages && (
+            <a
+              href={`?page=${pagination.page + 1}${search ? `&search=${search}` : ''}`}
+              class="btn btn-sm"
+            >
+              Next →
+            </a>
+          )}
+        </div>
+      )
+    }
   </div>
 </AdminLayout>
 

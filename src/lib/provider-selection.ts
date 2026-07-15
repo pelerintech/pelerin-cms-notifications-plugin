@@ -12,7 +12,10 @@ export interface RuleProviderInfo {
 }
 
 /** Get the provider to use for a given rule. */
-export function getProviderForRule(rule: RuleProviderInfo, isDev: boolean): NotificationProvider | null {
+export function getProviderForRule(
+  rule: RuleProviderInfo,
+  isDev: boolean
+): NotificationProvider | null {
   if (isDev) {
     return getProvider('local');
   }

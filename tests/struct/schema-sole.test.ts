@@ -13,7 +13,7 @@ test('config.ts does not exist', async () => {
   await assert.rejects(
     () => fs.access(join(ROOT, 'src/db/config.ts'), constants.F_OK),
     { code: 'ENOENT' },
-    'src/db/config.ts should not exist after v7 migration',
+    'src/db/config.ts should not exist after v7 migration'
   );
 });
 
@@ -26,13 +26,11 @@ test('schema.ts exports all four table definitions', async () => {
 });
 
 test('manifest dbConfig points at schema.ts', () => {
-  const manifest = JSON.parse(
-    readFileSync(join(ROOT, 'pelerin.manifest.json'), 'utf-8'),
-  );
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'pelerin.manifest.json'), 'utf-8'));
   assert.strictEqual(
     manifest.dbConfig,
     './src/db/schema.ts',
-    'manifest dbConfig should point at schema.ts, not config.ts',
+    'manifest dbConfig should point at schema.ts, not config.ts'
   );
 });
 
@@ -40,6 +38,6 @@ test('schema-parity.test.ts does not exist', async () => {
   await assert.rejects(
     () => fs.access(join(ROOT, 'tests/db/schema-parity.test.ts'), constants.F_OK),
     { code: 'ENOENT' },
-    'tests/db/schema-parity.test.ts should not exist after v7 migration',
+    'tests/db/schema-parity.test.ts should not exist after v7 migration'
   );
 });

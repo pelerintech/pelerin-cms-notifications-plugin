@@ -9,7 +9,11 @@ const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
 ---
 
-<AdminLayout title="New Template" currentPath="/admin/plugins/notifications/templates/new" user={user}>
+<AdminLayout
+  title="New Template"
+  currentPath="/admin/plugins/notifications/templates/new"
+  user={user}
+>
   <div class="col-span-12 max-w-3xl">
     <h1 class="text-2xl font-bold mb-6">Create New Template</h1>
 
@@ -33,12 +37,14 @@ const user = await sdk.auth.requireAdmin(Astro.request);
       <div class="form-control mb-4">
         <label class="label">
           <span class="label-text font-medium">Subject</span>
-          <span class="label-text-alt text-base-content/50">Use &#123;&#123; field &#125;&#125; for dynamic values</span>
+          <span class="label-text-alt text-base-content/50"
+            >Use &#123;&#123; field &#125;&#125; for dynamic values</span
+          >
         </label>
         <input
           type="text"
           name="subject"
-          placeholder="Your order &#123;&#123; order.number &#125;&#125; has been confirmed"
+          placeholder="Your order {{ order.number }} has been confirmed"
           class="input input-bordered w-full"
           required
         />
@@ -51,22 +57,22 @@ const user = await sdk.auth.requireAdmin(Astro.request);
         </label>
         <textarea
           name="body_html"
-          placeholder="<h1>Thank you for your order!</h1><p>Order: &#123;&#123; order.number &#125;&#125;</p>"
-          class="textarea textarea-bordered w-full h-48 font-mono text-sm"
-        ></textarea>
+          placeholder="<h1>Thank you for your order!</h1><p>Order: {{ order.number }}</p>"
+          class="textarea textarea-bordered w-full h-48 font-mono text-sm"></textarea>
       </div>
 
       {/* Body Text */}
       <div class="form-control mb-4">
         <label class="label">
           <span class="label-text font-medium">Body (Plain Text)</span>
-          <span class="label-text-alt text-base-content/50">Fallback for email clients that don't support HTML</span>
+          <span class="label-text-alt text-base-content/50"
+            >Fallback for email clients that don't support HTML</span
+          >
         </label>
         <textarea
           name="body_text"
-          placeholder="Thank you for your order! Order: &#123;&#123; order.number &#125;&#125;"
-          class="textarea textarea-bordered w-full h-32 font-mono text-sm"
-        ></textarea>
+          placeholder="Thank you for your order! Order: {{ order.number }}"
+          class="textarea textarea-bordered w-full h-32 font-mono text-sm"></textarea>
       </div>
 
       {/* Actions */}

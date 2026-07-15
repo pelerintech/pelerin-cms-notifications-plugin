@@ -12,7 +12,11 @@ const id = Astro.params.id;
 const returnPage = Astro.url.searchParams.get('page') || '1';
 ---
 
-<AdminLayout title="Edit Template" currentPath={`/admin/plugins/notifications/templates/${id}`} user={user}>
+<AdminLayout
+  title="Edit Template"
+  currentPath={`/admin/plugins/notifications/templates/${id}`}
+  user={user}
+>
   <div class="col-span-12 max-w-3xl">
     <h1 class="text-2xl font-bold mb-6">Edit Template</h1>
 
@@ -23,12 +27,7 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
         <label class="label">
           <span class="label-text font-medium">Template Name</span>
         </label>
-        <input
-          type="text"
-          name="name"
-          class="input input-bordered w-full"
-          required
-        />
+        <input type="text" name="name" class="input input-bordered w-full" required />
       </div>
 
       {/* Subject */}
@@ -36,12 +35,7 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
         <label class="label">
           <span class="label-text font-medium">Subject</span>
         </label>
-        <input
-          type="text"
-          name="subject"
-          class="input input-bordered w-full"
-          required
-        />
+        <input type="text" name="subject" class="input input-bordered w-full" required />
       </div>
 
       {/* Body HTML */}
@@ -49,9 +43,7 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
         <label class="label">
           <span class="label-text font-medium">Body (HTML)</span>
         </label>
-        <textarea
-          name="body_html"
-          class="textarea textarea-bordered w-full h-48 font-mono text-sm"
+        <textarea name="body_html" class="textarea textarea-bordered w-full h-48 font-mono text-sm"
         ></textarea>
       </div>
 
@@ -60,16 +52,16 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
         <label class="label">
           <span class="label-text font-medium">Body (Plain Text)</span>
         </label>
-        <textarea
-          name="body_text"
-          class="textarea textarea-bordered w-full h-32 font-mono text-sm"
+        <textarea name="body_text" class="textarea textarea-bordered w-full h-32 font-mono text-sm"
         ></textarea>
       </div>
 
       {/* Actions */}
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href={`/admin/plugins/notifications/templates?page=${returnPage}`} class="btn btn-ghost">Cancel</a>
+        <a href={`/admin/plugins/notifications/templates?page=${returnPage}`} class="btn btn-ghost"
+          >Cancel</a
+        >
         <button type="button" class="btn btn-error btn-sm ml-auto" id="delete-btn">Delete</button>
       </div>
     </form>
@@ -82,11 +74,14 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
     const formData = new FormData(e.target);
     const body = Object.fromEntries(formData.entries());
 
-    const res = await fetch(`/api/plugins/notifications/templates/${window.location.pathname.split('/').pop()}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const res = await fetch(
+      `/api/plugins/notifications/templates/${window.location.pathname.split('/').pop()}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
 
     if (res.ok) {
       window.location.href = `/admin/plugins/notifications/templates?page=${new URLSearchParams(window.location.search).get('page') || '1'}`;
@@ -97,7 +92,12 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
   });
 
   document.getElementById('delete-btn').addEventListener('click', async () => {
-    if (!confirm('Are you sure you want to delete this template? It cannot be deleted if rules reference it.')) return;
+    if (
+      !confirm(
+        'Are you sure you want to delete this template? It cannot be deleted if rules reference it.'
+      )
+    )
+      return;
     const id = window.location.pathname.split('/').pop();
     const res = await fetch(`/api/plugins/notifications/templates/${id}`, { method: 'DELETE' });
     if (res.status === 409) {

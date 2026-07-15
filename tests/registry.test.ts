@@ -26,13 +26,17 @@ describe('Provider registry', () => {
   });
 
   it('duplicate registration throws', () => {
-    assert.throws(() => {
-      registerProvider({
-        name: 'test',
-        channels: ['email'],
-        getConfigSchema: () => ({}),
-        send: async () => ({}),
-      });
-    }, /already registered/i, 'Duplicate registration should throw');
+    assert.throws(
+      () => {
+        registerProvider({
+          name: 'test',
+          channels: ['email'],
+          getConfigSchema: () => ({}),
+          send: async () => ({}),
+        });
+      },
+      /already registered/i,
+      'Duplicate registration should throw'
+    );
   });
 });
