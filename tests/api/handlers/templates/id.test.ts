@@ -22,8 +22,13 @@ describe('runPut (templates/[id]) — auth + 404 + happy', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runPut({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api', body: { subject: 'x' }, params: { id: 'missing' } }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api',
+          body: { subject: 'x' },
+          params: { id: 'missing' },
+        }),
       });
       assert.equal(res.status, 404);
       const b = await res.json();
@@ -38,8 +43,13 @@ describe('runPut (templates/[id]) — auth + 404 + happy', () => {
     try {
       const { templateId } = await seedMinimal(db);
       const res = await runPut({
-        db, sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api', body: { subject: 'New Subject' }, params: { id: templateId } }),
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api',
+          body: { subject: 'New Subject' },
+          params: { id: templateId },
+        }),
       });
       assert.equal(res.status, 200);
       const b = await res.json();
@@ -64,7 +74,8 @@ describe('runDelete (templates/[id]) — auth + 404 + happy', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runDelete({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api', params: { id: 'missing' } }),
       });
       assert.equal(res.status, 404);
@@ -80,7 +91,8 @@ describe('runDelete (templates/[id]) — auth + 404 + happy', () => {
     try {
       const { templateId } = await seedMinimal(db);
       const res = await runDelete({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api', params: { id: templateId } }),
       });
       assert.equal(res.status, 200);

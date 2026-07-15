@@ -22,7 +22,11 @@ test('init subscribes to * on the event bus and logs init message', () => {
   try {
     let subscribePattern: string | null = null;
     const ctx = {
-      events: { subscribe: (pattern: string) => { subscribePattern = pattern; } },
+      events: {
+        subscribe: (pattern: string) => {
+          subscribePattern = pattern;
+        },
+      },
       db: {},
     };
     init(ctx);
@@ -48,5 +52,8 @@ test('init with invalid context logs error and does not throw', () => {
 test('init.ts imports dispatchEvent and calls it inside the subscriber (structural)', () => {
   const src = readFileSync(new URL('../../src/init.ts', import.meta.url), 'utf-8');
   assert.ok(src.includes('dispatchEvent'), 'init.ts should import dispatchEvent');
-  assert.ok(src.includes('ctx.db') || src.includes('ctx.events.subscribe'), 'init.ts should use ctx.db or ctx.events.subscribe');
+  assert.ok(
+    src.includes('ctx.db') || src.includes('ctx.events.subscribe'),
+    'init.ts should use ctx.db or ctx.events.subscribe'
+  );
 });

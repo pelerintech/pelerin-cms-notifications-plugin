@@ -53,10 +53,7 @@ describe('SendGrid provider credentials', () => {
 
   test('reads decrypted API key from settings table (not process.env)', async () => {
     await setSetting(db, 'sendgrid_api_key', encrypt('SG.real-key'));
-    const result = await sendgrid.send(
-      { to: ['a@b.com'], subject: 's', bodyText: 't' },
-      db,
-    );
+    const result = await sendgrid.send({ to: ['a@b.com'], subject: 's', bodyText: 't' }, db);
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.messageId, 'msg-1');
     assert.ok(captured, 'fetch was called');
@@ -65,10 +62,7 @@ describe('SendGrid provider credentials', () => {
   });
 
   test('no creds in db + no env → configuration error, fetch NOT called', async () => {
-    const result = await sendgrid.send(
-      { to: ['a@b.com'], subject: 's', bodyText: 't' },
-      db,
-    );
+    const result = await sendgrid.send({ to: ['a@b.com'], subject: 's', bodyText: 't' }, db);
     assert.strictEqual(result.success, false);
     assert.match(result.error || '', /SendGrid API key not configured/);
     assert.strictEqual(fetchMock.mock.callCount(), 0);

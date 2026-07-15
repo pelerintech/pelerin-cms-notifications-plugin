@@ -18,7 +18,12 @@
  * `{ success: false, error }`.
  */
 import { registerProvider } from './registry.ts';
-import type { NotificationProvider, SendParams, SendResult, ProviderConfigSchema } from './interface.ts';
+import type {
+  NotificationProvider,
+  SendParams,
+  SendResult,
+  ProviderConfigSchema,
+} from './interface.ts';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { getSetting } from '../lib/data/settings.ts';
 import { decryptIfNeeded } from '../lib/crypto.ts';
@@ -96,7 +101,8 @@ export const sesProvider: NotificationProvider = {
         ses_from_email: {
           type: 'text',
           label: 'From Email',
-          description: 'SES-verified sender email address (the Source). Must be a verified identity in your AWS SES account.',
+          description:
+            'SES-verified sender email address (the Source). Must be a verified identity in your AWS SES account.',
           placeholder: 'verified@yourdomain.com',
         },
       },
@@ -120,7 +126,11 @@ export const sesProvider: NotificationProvider = {
     }
 
     try {
-      const client = await sesClientFactory({ region, accessKeyId: accessKey, secretAccessKey: secretKey });
+      const client = await sesClientFactory({
+        region,
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+      });
       const { SendEmailCommand } = await import('@aws-sdk/client-ses');
       const cmd = new SendEmailCommand({
         Source: fromEmail,

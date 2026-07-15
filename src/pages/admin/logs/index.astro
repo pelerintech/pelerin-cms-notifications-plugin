@@ -80,76 +80,99 @@ const totalPages = Math.max(1, Math.ceil(total / pageSize));
       </div>
       <div class="form-control">
         <label class="label"><span class="label-text text-xs">Rule ID</span></label>
-        <input type="text" class="input input-bordered input-sm" id="filter-rule" placeholder="Filter by rule ID" value={rule} />
+        <input
+          type="text"
+          class="input input-bordered input-sm"
+          id="filter-rule"
+          placeholder="Filter by rule ID"
+          value={rule}
+        />
       </div>
       <button class="btn btn-primary btn-sm" id="apply-filters">Apply</button>
       <button class="btn btn-ghost btn-sm" id="clear-filters">Clear</button>
     </div>
 
     {/* Logs Table */}
-    {logs.length === 0 ? (
-      <p class="text-base-content/60">No log entries found.</p>
-    ) : (
-      <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Provider</th>
-              <th>Rule ID</th>
-              <th>Subject</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
+    {
+      logs.length === 0 ? (
+        <p class="text-base-content/60">No log entries found.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
               <tr>
-                <td class="text-sm">
-                  {new Date(log.created_at).toLocaleDateString()}
-                  <br />
-                  <span class="text-xs text-base-content/50">
-                    {new Date(log.created_at).toLocaleTimeString()}
-                  </span>
-                </td>
-                <td><span class="badge badge-ghost">{log.provider_name}</span></td>
-                <td><code class="bg-base-200 px-2 py-1 rounded text-xs">{log.rule_id.substring(0, 8)}...</code></td>
-                <td class="max-w-xs">
-                  <span class="block truncate" title={log.subject}>{log.subject}</span>
-                </td>
-                <td>
-                  <span class={`badge ${log.success ? 'badge-success' : 'badge-error'}`}>
-                    {log.success ? 'Success' : 'Failed'}
-                  </span>
-                </td>
-                <td>
-                  <a href={`/admin/plugins/notifications/logs/${log.id}`} class="btn btn-ghost btn-xs">View</a>
-                </td>
+                <th>Date</th>
+                <th>Provider</th>
+                <th>Rule ID</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr>
+                  <td class="text-sm">
+                    {new Date(log.created_at).toLocaleDateString()}
+                    <br />
+                    <span class="text-xs text-base-content/50">
+                      {new Date(log.created_at).toLocaleTimeString()}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge badge-ghost">{log.provider_name}</span>
+                  </td>
+                  <td>
+                    <code class="bg-base-200 px-2 py-1 rounded text-xs">
+                      {log.rule_id.substring(0, 8)}...
+                    </code>
+                  </td>
+                  <td class="max-w-xs">
+                    <span class="block truncate" title={log.subject}>
+                      {log.subject}
+                    </span>
+                  </td>
+                  <td>
+                    <span class={`badge ${log.success ? 'badge-success' : 'badge-error'}`}>
+                      {log.success ? 'Success' : 'Failed'}
+                    </span>
+                  </td>
+                  <td>
+                    <a
+                      href={`/admin/plugins/notifications/logs/${log.id}`}
+                      class="btn btn-ghost btn-xs"
+                    >
+                      View
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
 
     {/* Pagination */}
-    {totalPages > 1 && (
-      <div class="flex justify-center mt-6 gap-2">
-        {page > 1 && (
-          <a href={`?page=${page - 1}${buildFilterQuery()}`} class="btn btn-sm">
-            ← Prev
-          </a>
-        )}
-        <span class="btn btn-sm btn-disabled">
-          Page {page} of {totalPages}
-        </span>
-        {page < totalPages && (
-          <a href={`?page=${page + 1}${buildFilterQuery()}`} class="btn btn-sm">
-            Next →
-          </a>
-        )}
-      </div>
-    )}
+    {
+      totalPages > 1 && (
+        <div class="flex justify-center mt-6 gap-2">
+          {page > 1 && (
+            <a href={`?page=${page - 1}${buildFilterQuery()}`} class="btn btn-sm">
+              ← Prev
+            </a>
+          )}
+          <span class="btn btn-sm btn-disabled">
+            Page {page} of {totalPages}
+          </span>
+          {page < totalPages && (
+            <a href={`?page=${page + 1}${buildFilterQuery()}`} class="btn btn-sm">
+              Next →
+            </a>
+          )}
+        </div>
+      )
+    }
   </div>
 </AdminLayout>
 

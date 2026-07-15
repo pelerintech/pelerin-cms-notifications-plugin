@@ -48,7 +48,7 @@ test('seedMinimal returns stable IDs and inserts 1 template + 2 rules', async ()
   assert.strictEqual(templates.length, 1);
   const rules = await db.select().from(notification_rules);
   assert.strictEqual(rules.length, 2);
-  const patterns = rules.map(r => r.event_pattern).sort();
+  const patterns = rules.map((r) => r.event_pattern).sort();
   assert.ok(patterns.includes('shop.order.created'));
   assert.ok(patterns.includes('shop.*'));
 });

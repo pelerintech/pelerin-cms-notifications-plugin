@@ -30,13 +30,23 @@ afterEach(() => {
 async function seedSes(db: any, opts: { withCreds: boolean }) {
   const now = new Date();
   await insertFixture(db, 'notification_templates', {
-    id: 't-ses', name: 'Order SES', subject: 'Order {{ order_id }}',
-    body_html: '<p>{{ customer_email }}</p>', body_text: null, created_at: now,
+    id: 't-ses',
+    name: 'Order SES',
+    subject: 'Order {{ order_id }}',
+    body_html: '<p>{{ customer_email }}</p>',
+    body_text: null,
+    created_at: now,
   });
   await insertFixture(db, 'notification_rules', {
-    id: 'r-ses', event_pattern: 'shop.order.created', template_id: 't-ses',
-    provider_name: 'ses', to: '{{ customer_email }}', cc: null, bcc: null,
-    active: true, created_at: now,
+    id: 'r-ses',
+    event_pattern: 'shop.order.created',
+    template_id: 't-ses',
+    provider_name: 'ses',
+    to: '{{ customer_email }}',
+    cc: null,
+    bcc: null,
+    active: true,
+    created_at: now,
   });
   if (opts.withCreds) {
     await setSetting(db, 'ses_region', encrypt('us-east-1'));

@@ -31,10 +31,13 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     await sdk.auth.requireAdmin(ctx.request);
     const url = new URL(ctx.request.url);
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
-    const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get('pageSize') || '20', 10)));
+    const pageSize = Math.min(
+      100,
+      Math.max(1, parseInt(url.searchParams.get('pageSize') || '20', 10))
+    );
     const provider = url.searchParams.get('provider') || undefined;
     const statusParam = url.searchParams.get('status');
-    const status = (statusParam === 'success' || statusParam === 'failure') ? statusParam : undefined;
+    const status = statusParam === 'success' || statusParam === 'failure' ? statusParam : undefined;
     const rule = url.searchParams.get('rule') || undefined;
     const from = url.searchParams.get('from') || undefined;
     const to = url.searchParams.get('to') || undefined;
@@ -48,10 +51,7 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
       from: from ? new Date(from) : undefined,
       to: to ? new Date(to) : undefined,
     });
-    return json(
-      { success: true, data: result.data, total: result.total, page, pageSize },
-      200,
-    );
+    return json({ success: true, data: result.data, total: result.total, page, pageSize }, 200);
   } catch (err: any) {
     const status = err.status ?? 500;
     return json({ success: false, error: err.message || 'Server Error' }, status);

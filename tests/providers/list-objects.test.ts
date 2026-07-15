@@ -17,10 +17,7 @@ test('listProviderObjects includes brevo with channels including email', () => {
   const brevo = objs.find((p) => p.name === 'brevo');
   assert.ok(brevo, 'brevo must be registered');
   assert.ok(brevo!.channels.includes('email'));
-  assert.deepStrictEqual(
-    brevo!.getConfigSchema().requiredKeys,
-    ['brevo_api_key', 'brevo_api_url'],
-  );
+  assert.deepStrictEqual(brevo!.getConfigSchema().requiredKeys, ['brevo_api_key', 'brevo_api_url']);
 });
 
 test('listProviders (names-only) still returns string[] including brevo (non-breaking)', () => {

@@ -19,7 +19,8 @@ after(() => {
 });
 
 ensureLoader();
-const { runGet, runPost } = await import('../../../../src/api/notifications/providers/[name]/settings.ts');
+const { runGet, runPost } =
+  await import('../../../../src/api/notifications/providers/[name]/settings.ts');
 
 describe('runGet (providers/[name]/settings) — auth + masked retrieval', () => {
   let db: any;
@@ -39,7 +40,8 @@ describe('runGet (providers/[name]/settings) — auth + masked retrieval', () =>
   test('happy-path: password field is masked to ****<last4>', async () => {
     await setSetting(db, 'sendgrid_api_key', encrypt('SG.real-key-12345'));
     const res = await runGet({
-      db, sdk: makeFakeSdk(),
+      db,
+      sdk: makeFakeSdk(),
       ctx: makeCtx({ url: 'http://localhost/api', params: { name: 'sendgrid' } }),
     });
     assert.equal(res.status, 200);
@@ -53,7 +55,8 @@ describe('runGet (providers/[name]/settings) — auth + masked retrieval', () =>
     await setSetting(db, 'mailgun_url', encrypt('https://api.mg.net/v3/d'));
     await setSetting(db, 'mailgun_api_key', encrypt('key-real'));
     const res = await runGet({
-      db, sdk: makeFakeSdk(),
+      db,
+      sdk: makeFakeSdk(),
       ctx: makeCtx({ url: 'http://localhost/api', params: { name: 'mailgun' } }),
     });
     const b = await res.json();
@@ -63,7 +66,8 @@ describe('runGet (providers/[name]/settings) — auth + masked retrieval', () =>
 
   test('no rows → empty data object', async () => {
     const res = await runGet({
-      db, sdk: makeFakeSdk(),
+      db,
+      sdk: makeFakeSdk(),
       ctx: makeCtx({ url: 'http://localhost/api', params: { name: 'sendgrid' } }),
     });
     const b = await res.json();
@@ -89,7 +93,8 @@ describe('runPost (providers/[name]/settings) — auth + save', () => {
 
   test('happy-path: save settings → 200 + data.saved', async () => {
     const res = await runPost({
-      db, sdk: makeFakeSdk(),
+      db,
+      sdk: makeFakeSdk(),
       ctx: makeCtx({
         url: 'http://localhost/api',
         body: { sendgrid_api_key: 'SG.new-key' },
@@ -110,7 +115,8 @@ describe('runPost (providers/[name]/settings) — auth + save', () => {
   test('unchanged masked password is skipped', async () => {
     await setSetting(db, 'sendgrid_api_key', encrypt('SG.real-key'));
     await runPost({
-      db, sdk: makeFakeSdk(),
+      db,
+      sdk: makeFakeSdk(),
       ctx: makeCtx({
         url: 'http://localhost/api',
         body: { sendgrid_api_key: '****real' },
@@ -123,7 +129,8 @@ describe('runPost (providers/[name]/settings) — auth + save', () => {
 
   test('empty value is skipped', async () => {
     await runPost({
-      db, sdk: makeFakeSdk(),
+      db,
+      sdk: makeFakeSdk(),
       ctx: makeCtx({
         url: 'http://localhost/api',
         body: { sendgrid_api_key: '' },
@@ -137,7 +144,8 @@ describe('runPost (providers/[name]/settings) — auth + save', () => {
   test('upsert: existing row is updated, not duplicated', async () => {
     await setSetting(db, 'sendgrid_api_key', encrypt('old'));
     await runPost({
-      db, sdk: makeFakeSdk(),
+      db,
+      sdk: makeFakeSdk(),
       ctx: makeCtx({
         url: 'http://localhost/api',
         body: { sendgrid_api_key: 'new' },

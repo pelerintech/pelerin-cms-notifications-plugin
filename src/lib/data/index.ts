@@ -44,12 +44,6 @@ export {
   type ListLogsResult,
 } from './logs.ts';
 
-export {
-  getSetting,
-  setSetting,
-  listSettingsForProvider,
-} from './settings.ts';
+export { getSetting, setSetting, listSettingsForProvider } from './settings.ts';
 
-export {
-  isProviderConfigured,
-} from './providers.ts';
+export { isProviderConfigured } from './providers.ts';

@@ -34,7 +34,9 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
 
     const result = templateSchema.safeParse(body);
     if (!result.success) {
-      const fields = Object.fromEntries(result.error.issues.map((i) => [i.path.join('.'), i.message]));
+      const fields = Object.fromEntries(
+        result.error.issues.map((i) => [i.path.join('.'), i.message])
+      );
       return json({ success: false, error: 'Validation failed', fields }, 422);
     }
 

@@ -51,10 +51,7 @@ export interface CreateLogInput {
 }
 
 /** List logs with optional filters and pagination, newest first. */
-export async function listLogs(
-  db: LibSQLDatabase,
-  opts: ListLogsOptions
-): Promise<ListLogsResult> {
+export async function listLogs(db: LibSQLDatabase, opts: ListLogsOptions): Promise<ListLogsResult> {
   const conditions = [];
   if (opts.provider) {
     conditions.push(eq(notification_logs.provider_name, opts.provider));
@@ -74,7 +71,9 @@ export async function listLogs(
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const [rows, totalRows] = await Promise.all([
-    db.select().from(notification_logs)
+    db
+      .select()
+      .from(notification_logs)
       .$dynamic()
       .where(where)
       .orderBy(desc(notification_logs.created_at))
@@ -90,20 +89,13 @@ export async function listLogs(
 }
 
 /** Get a single log by id, or null if not found. */
-export async function getLog(
-  db: LibSQLDatabase,
-  id: string
-): Promise<LogRow | null> {
-  const rows = await db.select().from(notification_logs)
-    .where(eq(notification_logs.id, id));
+export async function getLog(db: LibSQLDatabase, id: string): Promise<LogRow | null> {
+  const rows = await db.select().from(notification_logs).where(eq(notification_logs.id, id));
   return (rows[0] as LogRow | undefined) ?? null;
 }
 
 /** Create a log entry (the dispatch write). */
-export async function createLog(
-  db: LibSQLDatabase,
-  input: CreateLogInput
-): Promise<LogRow> {
+export async function createLog(db: LibSQLDatabase, input: CreateLogInput): Promise<LogRow> {
   const now = new Date();
   const id = crypto.randomUUID();
   const row = {

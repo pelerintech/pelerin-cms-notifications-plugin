@@ -43,7 +43,9 @@ export async function runPut({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     // Use partial validation — all fields optional for updates
     const result = ruleSchema.partial().safeParse(body);
     if (!result.success) {
-      const fields = Object.fromEntries(result.error.issues.map((i) => [i.path.join('.'), i.message]));
+      const fields = Object.fromEntries(
+        result.error.issues.map((i) => [i.path.join('.'), i.message])
+      );
       return json({ success: false, error: 'Validation failed', fields }, 422);
     }
 
@@ -51,10 +53,7 @@ export async function runPut({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     // that is not fully configured. Skipped in dev mode and when provider_name
     // is not being changed. `local` is rejected because isProviderConfigured('local')
     // returns false.
-    if (
-      result.data.provider_name !== undefined &&
-      process.env.NOTIFICATIONS_DEV_MODE !== 'true'
-    ) {
+    if (result.data.provider_name !== undefined && process.env.NOTIFICATIONS_DEV_MODE !== 'true') {
       const configured = await isProviderConfigured(db, result.data.provider_name);
       if (!configured) {
         return json(
@@ -62,7 +61,7 @@ export async function runPut({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
             success: false,
             error: `Provider "${result.data.provider_name}" is not configured. Configure it on the Providers page first.`,
           },
-          400,
+          400
         );
       }
     }

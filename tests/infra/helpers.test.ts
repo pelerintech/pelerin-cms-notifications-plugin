@@ -19,7 +19,7 @@ test('makeFakeSdk({ authThrows: unauthorizedError() }) throws with status 401', 
   const sdk = makeFakeSdk({ authThrows: unauthorizedError() });
   await assert.rejects(
     () => sdk.auth.requireAdmin({} as any),
-    (err: any) => err.status === 401,
+    (err: any) => err.status === 401
   );
 });
 

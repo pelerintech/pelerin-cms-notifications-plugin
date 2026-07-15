@@ -7,7 +7,7 @@ describe('Event pattern matcher', () => {
     assert.strictEqual(
       matches('shop.order.created', 'shop.order.created'),
       true,
-      'exact match should return true',
+      'exact match should return true'
     );
   });
 
@@ -15,7 +15,7 @@ describe('Event pattern matcher', () => {
     assert.strictEqual(
       matches('shop.*', 'shop.order.created'),
       true,
-      'prefix wildcard should match',
+      'prefix wildcard should match'
     );
   });
 
@@ -23,23 +23,19 @@ describe('Event pattern matcher', () => {
     assert.strictEqual(
       matches('shop.*', 'pelerin-cms.item.created'),
       false,
-      'prefix wildcard should not match different prefix',
+      'prefix wildcard should not match different prefix'
     );
   });
 
   it('global wildcard match', () => {
-    assert.strictEqual(
-      matches('*', 'anything'),
-      true,
-      'global wildcard should match everything',
-    );
+    assert.strictEqual(matches('*', 'anything'), true, 'global wildcard should match everything');
   });
 
   it('exact no match', () => {
     assert.strictEqual(
       matches('shop.order.created', 'shop.cart.added'),
       false,
-      'exact match should not match different event',
+      'exact match should not match different event'
     );
   });
 });

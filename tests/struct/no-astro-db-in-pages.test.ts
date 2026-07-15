@@ -32,6 +32,6 @@ test('no admin page imports from astro:db', () => {
   assert.deepStrictEqual(
     offenders,
     [],
-    `These admin pages still import from astro:db: ${offenders.join(', ')}`,
+    `These admin pages still import from astro:db: ${offenders.join(', ')}`
   );
 });

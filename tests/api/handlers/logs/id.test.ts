@@ -43,7 +43,8 @@ describe('runGet (logs/[id]) — auth + 404 + happy', () => {
     const { db, cleanup } = await createTestDb();
     try {
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api', params: { id: 'missing' } }),
       });
       assert.equal(res.status, 404);
@@ -59,7 +60,8 @@ describe('runGet (logs/[id]) — auth + 404 + happy', () => {
     try {
       await insertLog(db, { id: 'l1', subject: 'Test' });
       const res = await runGet({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({ url: 'http://localhost/api', params: { id: 'l1' } }),
       });
       assert.equal(res.status, 200);

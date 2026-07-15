@@ -5,7 +5,12 @@
  * Auto-registers with the provider registry on import.
  */
 import { registerProvider } from './registry.ts';
-import type { NotificationProvider, SendParams, SendResult, ProviderConfigSchema } from './interface.ts';
+import type {
+  NotificationProvider,
+  SendParams,
+  SendResult,
+  ProviderConfigSchema,
+} from './interface.ts';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { getSetting } from '../lib/data/settings.ts';
 import { decryptIfNeeded } from '../lib/crypto.ts';
@@ -75,7 +80,7 @@ export const brevoProvider: NotificationProvider = {
         return { success: false, error: `Brevo API error (${response.status}): ${errorBody}` };
       }
 
-      const data = await response.json() as { messageId?: string; message_id?: string };
+      const data = (await response.json()) as { messageId?: string; message_id?: string };
       return { success: true, messageId: data.messageId || data.message_id || undefined };
     } catch (err: any) {
       return { success: false, error: `Brevo request failed: ${err.message}` };

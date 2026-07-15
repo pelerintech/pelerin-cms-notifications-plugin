@@ -5,7 +5,12 @@
  * Auto-registers with the provider registry on import.
  */
 import { registerProvider } from './registry.ts';
-import type { NotificationProvider, SendParams, SendResult, ProviderConfigSchema } from './interface.ts';
+import type {
+  NotificationProvider,
+  SendParams,
+  SendResult,
+  ProviderConfigSchema,
+} from './interface.ts';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { getSetting } from '../lib/data/settings.ts';
 import { decryptIfNeeded } from '../lib/crypto.ts';

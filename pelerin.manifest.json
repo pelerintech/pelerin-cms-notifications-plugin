@@ -7,33 +7,97 @@
   "publicPages": [],
   "adminPages": [
     { "pattern": "/admin/plugins/notifications", "entrypoint": "./src/pages/admin/index.astro" },
-    { "pattern": "/admin/plugins/notifications/rules", "entrypoint": "./src/pages/admin/rules/index.astro" },
-    { "pattern": "/admin/plugins/notifications/rules/new", "entrypoint": "./src/pages/admin/rules/new.astro" },
-    { "pattern": "/admin/plugins/notifications/rules/[id]", "entrypoint": "./src/pages/admin/rules/[id].astro" },
-    { "pattern": "/admin/plugins/notifications/templates", "entrypoint": "./src/pages/admin/templates/index.astro" },
-    { "pattern": "/admin/plugins/notifications/templates/new", "entrypoint": "./src/pages/admin/templates/new.astro" },
-    { "pattern": "/admin/plugins/notifications/templates/[id]", "entrypoint": "./src/pages/admin/templates/[id].astro" },
-    { "pattern": "/admin/plugins/notifications/providers", "entrypoint": "./src/pages/admin/providers/index.astro" },
-    { "pattern": "/admin/plugins/notifications/providers/[name]", "entrypoint": "./src/pages/admin/providers/[name].astro" },
-    { "pattern": "/admin/plugins/notifications/logs", "entrypoint": "./src/pages/admin/logs/index.astro" },
-    { "pattern": "/admin/plugins/notifications/logs/[id]", "entrypoint": "./src/pages/admin/logs/[id].astro" }
+    {
+      "pattern": "/admin/plugins/notifications/rules",
+      "entrypoint": "./src/pages/admin/rules/index.astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/rules/new",
+      "entrypoint": "./src/pages/admin/rules/new.astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/rules/[id]",
+      "entrypoint": "./src/pages/admin/rules/[id].astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/templates",
+      "entrypoint": "./src/pages/admin/templates/index.astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/templates/new",
+      "entrypoint": "./src/pages/admin/templates/new.astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/templates/[id]",
+      "entrypoint": "./src/pages/admin/templates/[id].astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/providers",
+      "entrypoint": "./src/pages/admin/providers/index.astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/providers/[name]",
+      "entrypoint": "./src/pages/admin/providers/[name].astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/logs",
+      "entrypoint": "./src/pages/admin/logs/index.astro"
+    },
+    {
+      "pattern": "/admin/plugins/notifications/logs/[id]",
+      "entrypoint": "./src/pages/admin/logs/[id].astro"
+    }
   ],
   "apiEndpoints": [
-    { "pattern": "/api/plugins/notifications/rules", "entrypoint": "./src/api/notifications/rules/index.ts" },
-    { "pattern": "/api/plugins/notifications/rules/providers", "entrypoint": "./src/api/notifications/rules/providers.ts" },
-    { "pattern": "/api/plugins/notifications/rules/create", "entrypoint": "./src/api/notifications/rules/create.ts" },
-    { "pattern": "/api/plugins/notifications/rules/[id]", "entrypoint": "./src/api/notifications/rules/[id].ts" },
-    { "pattern": "/api/plugins/notifications/templates", "entrypoint": "./src/api/notifications/templates/index.ts" },
-    { "pattern": "/api/plugins/notifications/templates/create", "entrypoint": "./src/api/notifications/templates/create.ts" },
-    { "pattern": "/api/plugins/notifications/templates/[id]", "entrypoint": "./src/api/notifications/templates/[id].ts" },
-    { "pattern": "/api/plugins/notifications/providers/[name]/settings", "entrypoint": "./src/api/notifications/providers/[name]/settings.ts" },
-    { "pattern": "/api/plugins/notifications/logs", "entrypoint": "./src/api/notifications/logs/index.ts" },
-    { "pattern": "/api/plugins/notifications/logs/[id]", "entrypoint": "./src/api/notifications/logs/[id].ts" }
+    {
+      "pattern": "/api/plugins/notifications/rules",
+      "entrypoint": "./src/api/notifications/rules/index.ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/rules/providers",
+      "entrypoint": "./src/api/notifications/rules/providers.ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/rules/create",
+      "entrypoint": "./src/api/notifications/rules/create.ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/rules/[id]",
+      "entrypoint": "./src/api/notifications/rules/[id].ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/templates",
+      "entrypoint": "./src/api/notifications/templates/index.ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/templates/create",
+      "entrypoint": "./src/api/notifications/templates/create.ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/templates/[id]",
+      "entrypoint": "./src/api/notifications/templates/[id].ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/providers/[name]/settings",
+      "entrypoint": "./src/api/notifications/providers/[name]/settings.ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/logs",
+      "entrypoint": "./src/api/notifications/logs/index.ts"
+    },
+    {
+      "pattern": "/api/plugins/notifications/logs/[id]",
+      "entrypoint": "./src/api/notifications/logs/[id].ts"
+    }
   ],
   "navItems": [
     { "label": "Notifications", "href": "/admin/plugins/notifications", "icon": "mail" },
     { "label": "Rules", "href": "/admin/plugins/notifications/rules", "icon": "list-check" },
-    { "label": "Templates", "href": "/admin/plugins/notifications/templates", "icon": "file-lines" },
+    {
+      "label": "Templates",
+      "href": "/admin/plugins/notifications/templates",
+      "icon": "file-lines"
+    },
     { "label": "Providers", "href": "/admin/plugins/notifications/providers", "icon": "server" },
     { "label": "Logs", "href": "/admin/plugins/notifications/logs", "icon": "table-cells" }
   ]

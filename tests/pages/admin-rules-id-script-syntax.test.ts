@@ -60,7 +60,7 @@ describe('admin rules/[id] page — client <script> syntax', () => {
     assert.equal(
       exitCode,
       0,
-      `client <script> in rules/[id].astro has a syntax error — the entire client script is disabled at parse time.\nesbuild output:\n${combined}`,
+      `client <script> in rules/[id].astro has a syntax error — the entire client script is disabled at parse time.\nesbuild output:\n${combined}`
     );
   });
 });

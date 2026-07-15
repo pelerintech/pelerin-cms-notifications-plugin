@@ -1,12 +1,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert';
 import { ensureLoader } from '../../../stubs/register.mjs';
-import {
-  makeFakeSdk,
-  makeCtx,
-  poisonDb,
-  unauthorizedError,
-} from '../../helpers.ts';
+import { makeFakeSdk, makeCtx, poisonDb, unauthorizedError } from '../../helpers.ts';
 import { createTestDb, insertFixture } from '../../../db/harness.ts';
 import { setSetting } from '../../../../src/lib/data/settings.ts';
 import { encrypt } from '../../../../src/lib/crypto.ts';
@@ -191,9 +186,14 @@ describe('runPost (rules/create) — auth + validation + happy + guardrail + dup
         to: 'a@b.com',
         channel: 'email',
       };
-      await runPost({ db, sdk: makeFakeSdk(), ctx: makeCtx({ url: 'http://localhost/api', body }) });
+      await runPost({
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({ url: 'http://localhost/api', body }),
+      });
       const res = await runPost({
-        db, sdk: makeFakeSdk(),
+        db,
+        sdk: makeFakeSdk(),
         ctx: makeCtx({
           url: 'http://localhost/api',
           body: { ...body, to: 'c@d.com' },

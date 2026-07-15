@@ -26,6 +26,7 @@ export interface ProviderConfigField {
   label: string;
   description: string;
   default?: string;
+  placeholder?: string;
 }
 
 export interface ProviderConfigSchema {

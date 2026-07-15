@@ -23,7 +23,8 @@ const COLUMNS_SYMBOL = Symbol.for('drizzle:Columns');
 
 /** All plugin table objects from the schema module. */
 const tables = Object.entries(schema).filter(
-  ([, v]) => v && typeof v === 'object' && Object.getOwnPropertySymbols(v).some(s => s === COLUMNS_SYMBOL)
+  ([, v]) =>
+    v && typeof v === 'object' && Object.getOwnPropertySymbols(v).some((s) => s === COLUMNS_SYMBOL)
 ) as [string, Record<string, any>][];
 
 /**
@@ -72,7 +73,12 @@ export async function createTestDb(): Promise<TestDb> {
 const tableByName = Object.fromEntries(tables) as Record<string, Record<string, any>>;
 
 /** Tables in FK-safe clear order (children before parents). */
-const CLEAR_ORDER = [notification_logs, notification_rules, notification_templates, notification_settings];
+const CLEAR_ORDER = [
+  notification_logs,
+  notification_rules,
+  notification_templates,
+  notification_settings,
+];
 
 /** Clear all plugin tables in FK-safe order (children before parents). */
 export async function resetDb(db: LibSQLDatabase<typeof schema>): Promise<void> {
@@ -109,7 +115,9 @@ function rid(): string {
  * in dev mode; the rule's provider_name is preserved in logs per the dev-mode decision).
  * Returns stable IDs so tests can reference specific entities.
  */
-export async function seedMinimal(db: LibSQLDatabase<typeof schema>): Promise<NotificationFixtures> {
+export async function seedMinimal(
+  db: LibSQLDatabase<typeof schema>
+): Promise<NotificationFixtures> {
   const now = new Date();
   const f: NotificationFixtures = {
     templateId: rid(),

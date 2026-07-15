@@ -98,7 +98,7 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
 
     return json(
       { success: true, data: { provider: name, saved }, message: 'Settings saved successfully' },
-      200,
+      200
     );
   } catch (err: any) {
     const status = err.status ?? 500;

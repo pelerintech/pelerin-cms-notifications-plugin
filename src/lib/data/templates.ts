@@ -55,7 +55,9 @@ export async function listTemplates(
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const [rows, totalRows] = await Promise.all([
-    db.select().from(notification_templates)
+    db
+      .select()
+      .from(notification_templates)
       .$dynamic()
       .where(where)
       .orderBy(desc(notification_templates.created_at))
@@ -71,11 +73,10 @@ export async function listTemplates(
 }
 
 /** Get a single template by id, or null if not found. */
-export async function getTemplate(
-  db: LibSQLDatabase,
-  id: string
-): Promise<TemplateRow | null> {
-  const rows = await db.select().from(notification_templates)
+export async function getTemplate(db: LibSQLDatabase, id: string): Promise<TemplateRow | null> {
+  const rows = await db
+    .select()
+    .from(notification_templates)
     .where(eq(notification_templates.id, id));
   return (rows[0] as TemplateRow | undefined) ?? null;
 }
@@ -122,9 +123,6 @@ export async function updateTemplate(
 }
 
 /** Delete a template by id. */
-export async function deleteTemplate(
-  db: LibSQLDatabase,
-  id: string
-): Promise<void> {
+export async function deleteTemplate(db: LibSQLDatabase, id: string): Promise<void> {
   await db.delete(notification_templates).where(eq(notification_templates.id, id));
 }

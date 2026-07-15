@@ -32,7 +32,7 @@ describe('dispatch credential pass-through (structural)', () => {
     const src = readFileSync(new URL('../../src/lib/dispatch.ts', import.meta.url), 'utf-8');
     assert.ok(
       /provider\.send\(\s*\{[\s\S]*\}\s*,\s*db\s*\)/.test(src),
-      'dispatch must call provider.send({...}, db)',
+      'dispatch must call provider.send({...}, db)'
     );
   });
 });
@@ -52,7 +52,9 @@ describe('dispatch credential pass-through (behavioral)', () => {
       return {
         ok: true,
         status: 202,
-        headers: { get: (h: string) => (h.toLowerCase() === 'x-message-id' ? 'msg-dispatch-1' : null) },
+        headers: {
+          get: (h: string) => (h.toLowerCase() === 'x-message-id' ? 'msg-dispatch-1' : null),
+        },
         text: async () => '',
       };
     });

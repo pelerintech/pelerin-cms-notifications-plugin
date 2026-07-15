@@ -68,7 +68,9 @@ export async function listRules(
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const [rows, totalRows] = await Promise.all([
-    db.select().from(notification_rules)
+    db
+      .select()
+      .from(notification_rules)
       .$dynamic()
       .where(where)
       .orderBy(desc(notification_rules.created_at))
@@ -84,32 +86,31 @@ export async function listRules(
 }
 
 /** Get a single rule by id, or null if not found. */
-export async function getRule(
-  db: LibSQLDatabase,
-  id: string
-): Promise<RuleRow | null> {
-  const rows = await db.select().from(notification_rules)
-    .where(eq(notification_rules.id, id));
+export async function getRule(db: LibSQLDatabase, id: string): Promise<RuleRow | null> {
+  const rows = await db.select().from(notification_rules).where(eq(notification_rules.id, id));
   return (rows[0] as RuleRow | undefined) ?? null;
 }
 
 /** Create a rule. Throws RuleError code 'duplicate' if the (event_pattern, template_id, provider_name, channel) quadruple already exists. */
-export async function createRule(
-  db: LibSQLDatabase,
-  input: CreateRuleInput
-): Promise<RuleRow> {
+export async function createRule(db: LibSQLDatabase, input: CreateRuleInput): Promise<RuleRow> {
   const channel = input.channel ?? 'email';
   // Check for existing quadruple via SELECT before insert (matches ecomm's pattern).
-  const existing = await db.select({ id: notification_rules.id })
+  const existing = await db
+    .select({ id: notification_rules.id })
     .from(notification_rules)
-    .where(and(
-      eq(notification_rules.event_pattern, input.event_pattern),
-      eq(notification_rules.template_id, input.template_id),
-      eq(notification_rules.provider_name, input.provider_name),
-      eq(notification_rules.channel, channel),
-    ));
+    .where(
+      and(
+        eq(notification_rules.event_pattern, input.event_pattern),
+        eq(notification_rules.template_id, input.template_id),
+        eq(notification_rules.provider_name, input.provider_name),
+        eq(notification_rules.channel, channel)
+      )
+    );
   if (existing.length > 0) {
-    throw new RuleError('duplicate', 'Rule with this event_pattern, template_id, provider_name, and channel already exists');
+    throw new RuleError(
+      'duplicate',
+      'Rule with this event_pattern, template_id, provider_name, and channel already exists'
+    );
   }
 
   const now = new Date();
@@ -168,18 +169,17 @@ export async function findActiveRulesMatching(
   db: LibSQLDatabase,
   event: string
 ): Promise<RuleRow[]> {
-  const rows = await db.select().from(notification_rules)
+  const rows = await db
+    .select()
+    .from(notification_rules)
     .where(eq(notification_rules.active, true));
   const matching = (rows as RuleRow[])
-    .filter(rule => matches(rule.event_pattern, event))
+    .filter((rule) => matches(rule.event_pattern, event))
     .sort((a, b) => specificity(b.event_pattern) - specificity(a.event_pattern));
   return matching;
 }
 
 /** Delete a rule by id. */
-export async function deleteRule(
-  db: LibSQLDatabase,
-  id: string
-): Promise<void> {
+export async function deleteRule(db: LibSQLDatabase, id: string): Promise<void> {
   await db.delete(notification_rules).where(eq(notification_rules.id, id));
 }

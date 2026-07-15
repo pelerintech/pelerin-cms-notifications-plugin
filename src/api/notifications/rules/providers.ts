@@ -47,7 +47,7 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
 
     const candidates = listProviderObjects().filter(
-      (p) => p.name !== 'local' && p.channels.includes(channel),
+      (p) => p.name !== 'local' && p.channels.includes(channel)
     );
 
     const entries: AvailableProviderEntry[] = [];

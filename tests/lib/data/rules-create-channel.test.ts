@@ -39,12 +39,18 @@ test('createRule with explicit channel stores it', async () => {
 test('two rules same triple but different channels both succeed', async () => {
   const { db, templateId } = await setupWithTemplate();
   const a = await createRule(db, {
-    event_pattern: 'e3', template_id: templateId, provider_name: 'sendgrid',
-    to: 'a@b.com', channel: 'email',
+    event_pattern: 'e3',
+    template_id: templateId,
+    provider_name: 'sendgrid',
+    to: 'a@b.com',
+    channel: 'email',
   });
   const b = await createRule(db, {
-    event_pattern: 'e3', template_id: templateId, provider_name: 'sendgrid',
-    to: 'a@b.com', channel: 'sms',
+    event_pattern: 'e3',
+    template_id: templateId,
+    provider_name: 'sendgrid',
+    to: 'a@b.com',
+    channel: 'sms',
   });
   assert.notStrictEqual(a.id, b.id);
   assert.notStrictEqual(a.channel, b.channel);
@@ -53,14 +59,21 @@ test('two rules same triple but different channels both succeed', async () => {
 test('two rules same triple + same channel throws RuleError duplicate', async () => {
   const { db, templateId } = await setupWithTemplate();
   await createRule(db, {
-    event_pattern: 'e4', template_id: templateId, provider_name: 'sendgrid',
-    to: 'a@b.com', channel: 'email',
+    event_pattern: 'e4',
+    template_id: templateId,
+    provider_name: 'sendgrid',
+    to: 'a@b.com',
+    channel: 'email',
   });
   await assert.rejects(
-    () => createRule(db, {
-      event_pattern: 'e4', template_id: templateId, provider_name: 'sendgrid',
-      to: 'x@y.com', channel: 'email',
-    }),
-    (err: any) => err instanceof RuleError && err.code === 'duplicate',
+    () =>
+      createRule(db, {
+        event_pattern: 'e4',
+        template_id: templateId,
+        provider_name: 'sendgrid',
+        to: 'x@y.com',
+        channel: 'email',
+      }),
+    (err: any) => err instanceof RuleError && err.code === 'duplicate'
   );
 });

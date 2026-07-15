@@ -11,8 +11,11 @@ test('after ensureLoader(), importing pelerin:plugin-sdk resolves to the inert s
   ensureLoader();
   const mod = await import('pelerin:plugin-sdk');
   assert.ok(mod, 'pelerin:plugin-sdk should resolve via the loader stub');
-  assert.equal(typeof (mod as any).createPluginContext, 'function',
-    'plugin-sdk stub must export createPluginContext as a function');
+  assert.equal(
+    typeof (mod as any).createPluginContext,
+    'function',
+    'plugin-sdk stub must export createPluginContext as a function'
+  );
 });
 
 test('plugin-sdk stub createPluginContext returns an object', async () => {
@@ -30,8 +33,14 @@ test('relative specifier without a .ts extension resolves with .ts appended', as
   ensureLoader();
   // src/lib/matcher.ts exports `matches`; import it WITHOUT the .ts extension.
   const mod = await import('../../src/lib/matcher');
-  assert.equal(typeof (mod as any).matches, 'function',
-    'extension-less relative import must resolve to the .ts module');
-  assert.equal((mod as any).matches('shop.*', 'shop.order.created'), true,
-    'the resolved module must be the real matcher (not an inert stub)');
+  assert.equal(
+    typeof (mod as any).matches,
+    'function',
+    'extension-less relative import must resolve to the .ts module'
+  );
+  assert.equal(
+    (mod as any).matches('shop.*', 'shop.order.created'),
+    true,
+    'the resolved module must be the real matcher (not an inert stub)'
+  );
 });

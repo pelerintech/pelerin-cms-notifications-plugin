@@ -24,9 +24,24 @@ test('setSetting on existing key upserts (not duplicate insert)', async () => {
 test('listSettingsForProvider returns only that provider keys with prefix stripped', async () => {
   const { db } = await createTestDb();
   const now = new Date();
-  await insertFixture(db, 'notification_settings', { id: 's1', key: 'sendgrid_api_key', value: 'x', created_at: now });
-  await insertFixture(db, 'notification_settings', { id: 's2', key: 'smtp_host', value: 'localhost', created_at: now });
-  await insertFixture(db, 'notification_settings', { id: 's3', key: 'smtp_port', value: '587', created_at: now });
+  await insertFixture(db, 'notification_settings', {
+    id: 's1',
+    key: 'sendgrid_api_key',
+    value: 'x',
+    created_at: now,
+  });
+  await insertFixture(db, 'notification_settings', {
+    id: 's2',
+    key: 'smtp_host',
+    value: 'localhost',
+    created_at: now,
+  });
+  await insertFixture(db, 'notification_settings', {
+    id: 's3',
+    key: 'smtp_port',
+    value: '587',
+    created_at: now,
+  });
   const result = await listSettingsForProvider(db, 'smtp');
   assert.deepStrictEqual(result, { host: 'localhost', port: '587' });
 });

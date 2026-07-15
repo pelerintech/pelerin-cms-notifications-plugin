@@ -28,7 +28,10 @@ describe('admin providers/[name].astro page — client <script> syntax', () => {
     const source = readFileSync(PAGE_PATH, 'utf-8');
 
     const scriptMatches = [...source.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
-    assert.ok(scriptMatches.length > 0, 'expected at least one <script> block in providers/[name].astro');
+    assert.ok(
+      scriptMatches.length > 0,
+      'expected at least one <script> block in providers/[name].astro'
+    );
 
     const clientScript = scriptMatches[scriptMatches.length - 1][1];
     assert.ok(clientScript.trim().length > 0, 'extracted client script is empty');
@@ -55,7 +58,7 @@ describe('admin providers/[name].astro page — client <script> syntax', () => {
     assert.equal(
       exitCode,
       0,
-      `client <script> in providers/[name].astro has a syntax error — the entire client script is disabled at parse time.\nesbuild output:\n${combined}`,
+      `client <script> in providers/[name].astro has a syntax error — the entire client script is disabled at parse time.\nesbuild output:\n${combined}`
     );
   });
 });

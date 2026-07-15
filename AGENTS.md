@@ -17,6 +17,7 @@ The CMS repo lives at `../pelerin_cms/`. The sibling `../ecomm_plugin/` is the r
 The plugin subscribes to CMS events on the event bus and dispatches notifications (email in v1) via a provider registry. Rules map event patterns to templates and providers. Every dispatch attempt is logged for audit and testing.
 
 **Core entities:**
+
 - **Rules** — `(event_pattern, template_id, provider_name)` triplets with recipient fields (to/cc/bcc). Unique on the triple.
 - **Templates** — subject + body (HTML/text) with `{{ field }}` interpolation.
 - **Logs** — audit trail of every dispatch attempt (success/failure, full content).
@@ -46,6 +47,7 @@ src/lib/data/
 ```
 
 **Rules:**
+
 - Table objects are imported from `src/db/schema.ts` (pure Drizzle).
 - Accessors receive `db: LibSQLDatabase` as their first parameter. They never obtain `db` themselves.
 - Every accessor must have tests in `tests/lib/data/` against the real-SQLite test harness.
@@ -66,6 +68,7 @@ Both pass `db` to accessor functions. No other code obtains `db`.
 ## 6. Endpoint handler pattern (testable HTTP layer)
 
 Each endpoint file exports a `runMethod({ db, sdk, ctx }: HandlerDeps): Promise<Response>` function and a thin Astro wrapper:
+
 - **`runMethod`** (the testable surface) receives `db`/`sdk`/`ctx` as injected deps. Auth (`sdk.auth.requireAdmin`), body/query parsing, zod validation, accessor calls, and full `Response` construction all live INSIDE it. Responses use a `{ success: boolean, data?/error?, fields? }` envelope; validation failures return 422 with a `fields` map, auth failures 401, domain errors their status (404/409/400), unexpected errors 500.
 - **The wrapper** (`export const POST: APIRoute = (context) => { const sdk = createPluginContext(); return runPost({ db: sdk.db, sdk, ctx: context }); }`) sources `db` from `sdk.db` via `createPluginContext()`. It is NOT unit-tested.
 
@@ -80,6 +83,7 @@ Shared test infrastructure (ported verbatim from `../ecomm_plugin/`): `tests/api
 `src/lib/dispatch.ts` exports `dispatchEvent(db, event, payload)` — the testable function that turns an event into sent notifications. `src/init.ts` is a thin wiring function that subscribes to `*` and calls `dispatchEvent(ctx.db, event, payload)`.
 
 **Flow:**
+
 1. `findActiveRulesMatching(db, event)` — query active rules, filter by `matches(pattern, event)`, sort by specificity (exact > `prefix.*` > `*`)
 2. `getTemplate(db, rule.template_id)` — load the rule's template; if missing, `createLog` failure and continue
 3. `interpolate(template.subject, payload)` and body — render `{{ }}` placeholders
@@ -111,6 +115,7 @@ Providers implement the `NotificationProvider` interface (`src/providers/interfa
 ## 9. Test harness (`tests/db/harness.ts`)
 
 In-memory libSQL database that creates all 4 tables from `schema.ts`. Provides:
+
 - `createTestDb()` → `{ db, cleanup }`
 - `resetDb(db)` — clears all tables in FK-safe order
 - `insertFixture(db, tableName, row)` — single-row insert helper
@@ -204,6 +209,7 @@ pelerin_notifications/
 ## 14. Development workflow
 
 1. **Read** this file and `reespec/decisions.md` before modifying code
-2. **Test** accessors and handlers against the harness (`node --test`)
-3. **Run** the full suite: `node --test tests/full-suite.test.ts`
-4. **Manual smoke check**: `GET /api/plugins/notifications/rules` returns real rows; publish an event with `NOTIFICATIONS_DEV_MODE=true` and confirm a `notification_logs` row appears
+2. **Run all quality checks** before committing: `npm run format:check`, `npm run lint`, `npm run type-check`, and `npm run test` — all must pass (lint and type-check may report pre-existing warnings/errors unrelated to your change, but should not introduce new ones)
+3. **Test** accessors and handlers against the harness (`node --test`)
+4. **Run** the full suite: `node --test tests/full-suite.test.ts`
+5. **Manual smoke check**: `GET /api/plugins/notifications/rules` returns real rows; publish an event with `NOTIFICATIONS_DEV_MODE=true` and confirm a `notification_logs` row appears

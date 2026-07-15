@@ -39,8 +39,13 @@ test('dispatchEvent with a missing template writes a failure log and does not th
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_rules', {
-    id: 'r-missing-tpl', event_pattern: 'shop.order.created', template_id: 'missing-tpl',
-    provider_name: 'sendgrid', to: 'a@b.com', active: true, created_at: now,
+    id: 'r-missing-tpl',
+    event_pattern: 'shop.order.created',
+    template_id: 'missing-tpl',
+    provider_name: 'sendgrid',
+    to: 'a@b.com',
+    active: true,
+    created_at: now,
   });
   await dispatchEvent(db, 'shop.order.created', {});
   const logs = await db.select().from(notification_logs);
@@ -54,11 +59,21 @@ test('dispatchEvent with no recipients writes a failure log and does not call pr
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_templates', {
-    id: 't-norc', name: 'T', subject: 'S', body_html: null, body_text: null, created_at: now,
+    id: 't-norc',
+    name: 'T',
+    subject: 'S',
+    body_html: null,
+    body_text: null,
+    created_at: now,
   });
   await insertFixture(db, 'notification_rules', {
-    id: 'r-norc', event_pattern: 'shop.order.created', template_id: 't-norc',
-    provider_name: 'sendgrid', to: '{{ missing }}', active: true, created_at: now,
+    id: 'r-norc',
+    event_pattern: 'shop.order.created',
+    template_id: 't-norc',
+    provider_name: 'sendgrid',
+    to: '{{ missing }}',
+    active: true,
+    created_at: now,
   });
   await dispatchEvent(db, 'shop.order.created', {});
   const logs = await db.select().from(notification_logs);
@@ -97,8 +112,13 @@ test('dispatchEvent does not fire inactive rule', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_rules', {
-    id: 'r-inactive', event_pattern: 'shop.*', template_id: 't',
-    provider_name: 'sendgrid', to: 'a@b.com', active: false, created_at: now,
+    id: 'r-inactive',
+    event_pattern: 'shop.*',
+    template_id: 't',
+    provider_name: 'sendgrid',
+    to: 'a@b.com',
+    active: false,
+    created_at: now,
   });
   await dispatchEvent(db, 'shop.cart.added', {});
   const logs = await db.select().from(notification_logs);
@@ -110,12 +130,23 @@ test('dispatchEvent resolves cc and bcc from payload', async () => {
   const { db } = await createTestDb();
   const now = new Date();
   await insertFixture(db, 'notification_templates', {
-    id: 't-cc', name: 'T', subject: 'S', body_html: null, body_text: null, created_at: now,
+    id: 't-cc',
+    name: 'T',
+    subject: 'S',
+    body_html: null,
+    body_text: null,
+    created_at: now,
   });
   await insertFixture(db, 'notification_rules', {
-    id: 'r-cc', event_pattern: 'shop.order.created', template_id: 't-cc',
-    provider_name: 'sendgrid', to: 'a@b.com', cc: 'c@d.com', bcc: '{{ hidden }}',
-    active: true, created_at: now,
+    id: 'r-cc',
+    event_pattern: 'shop.order.created',
+    template_id: 't-cc',
+    provider_name: 'sendgrid',
+    to: 'a@b.com',
+    cc: 'c@d.com',
+    bcc: '{{ hidden }}',
+    active: true,
+    created_at: now,
   });
   await dispatchEvent(db, 'shop.order.created', { hidden: 'e@f.com' });
   const logs = await db.select().from(notification_logs);

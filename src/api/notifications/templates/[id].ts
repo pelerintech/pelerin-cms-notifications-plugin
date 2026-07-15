@@ -12,7 +12,12 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../lib/handler-types';
-import { updateTemplate, deleteTemplate, getTemplate, TemplateError } from '../../../lib/data/templates.ts';
+import {
+  updateTemplate,
+  deleteTemplate,
+  getTemplate,
+  TemplateError,
+} from '../../../lib/data/templates.ts';
 import { templateSchema } from '../../../schemas/template.schema.ts';
 
 export const PUT: APIRoute = (context) => {
@@ -40,7 +45,9 @@ export async function runPut({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
 
     const result = templateSchema.partial().safeParse(body);
     if (!result.success) {
-      const fields = Object.fromEntries(result.error.issues.map((i) => [i.path.join('.'), i.message]));
+      const fields = Object.fromEntries(
+        result.error.issues.map((i) => [i.path.join('.'), i.message])
+      );
       return json({ success: false, error: 'Validation failed', fields }, 422);
     }
 

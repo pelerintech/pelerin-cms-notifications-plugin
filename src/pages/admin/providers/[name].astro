@@ -23,7 +23,12 @@ const providerConfigs = {
     label: 'Mailgun',
     icon: '📧',
     fields: [
-      { key: 'mailgun_url', type: 'text', label: 'API URL', placeholder: 'https://api.mailgun.net/v3/your-domain.com' },
+      {
+        key: 'mailgun_url',
+        type: 'text',
+        label: 'API URL',
+        placeholder: 'https://api.mailgun.net/v3/your-domain.com',
+      },
       { key: 'mailgun_api_key', type: 'password', label: 'API Key', placeholder: 'key-xxxxx' },
     ],
   },
@@ -34,7 +39,12 @@ const providerConfigs = {
       { key: 'ses_region', type: 'text', label: 'AWS Region', placeholder: 'us-east-1' },
       { key: 'ses_access_key', type: 'password', label: 'Access Key ID', placeholder: 'AKIAxxxxx' },
       { key: 'ses_secret_key', type: 'password', label: 'Secret Access Key', placeholder: 'xxxxx' },
-      { key: 'ses_from_email', type: 'text', label: 'From Email', placeholder: 'verified@yourdomain.com' },
+      {
+        key: 'ses_from_email',
+        type: 'text',
+        label: 'From Email',
+        placeholder: 'verified@yourdomain.com',
+      },
     ],
   },
   smtp: {
@@ -53,7 +63,13 @@ const providerConfigs = {
     icon: '🔵',
     fields: [
       { key: 'brevo_api_key', type: 'password', label: 'API Key', placeholder: 'xkeysib-...' },
-      { key: 'brevo_api_url', type: 'text', label: 'API URL', placeholder: 'https://api.brevo.com/v3/smtp/email', defaultValue: 'https://api.brevo.com/v3/smtp/email' },
+      {
+        key: 'brevo_api_url',
+        type: 'text',
+        label: 'API URL',
+        placeholder: 'https://api.brevo.com/v3/smtp/email',
+        defaultValue: 'https://api.brevo.com/v3/smtp/email',
+      },
     ],
   },
 };
@@ -71,56 +87,70 @@ try {
 }
 ---
 
-{!provider ? (
-  <AdminLayout title="Provider Not Found" currentPath={`/admin/plugins/notifications/providers/${name}`} user={user}>
-    <div class="col-span-12">
-      <h1 class="text-2xl font-bold text-error">Provider not found</h1>
-      <p>Unknown provider: {name}</p>
-    </div>
-  </AdminLayout>
-) : (
-  <AdminLayout title={`Configure ${provider.label}`} currentPath={`/admin/plugins/notifications/providers/${name}`} user={user}>
-    <div class="col-span-12 max-w-xl">
-      <h1 class="text-2xl font-bold mb-6">Configure {provider.label}</h1>
+{
+  !provider ? (
+    <AdminLayout
+      title="Provider Not Found"
+      currentPath={`/admin/plugins/notifications/providers/${name}`}
+      user={user}
+    >
+      <div class="col-span-12">
+        <h1 class="text-2xl font-bold text-error">Provider not found</h1>
+        <p>Unknown provider: {name}</p>
+      </div>
+    </AdminLayout>
+  ) : (
+    <AdminLayout
+      title={`Configure ${provider.label}`}
+      currentPath={`/admin/plugins/notifications/providers/${name}`}
+      user={user}
+    >
+      <div class="col-span-12 max-w-xl">
+        <h1 class="text-2xl font-bold mb-6">Configure {provider.label}</h1>
 
-      {/* Form */}
-      <form id="settings-form">
-        {provider.fields.map((field) => (
-          <div class="form-control mb-4">
-            <label class="label">
-              <span class="label-text font-medium">{field.label}</span>
-            </label>
-            {field.type === 'checkbox' ? (
-              <input
-                type="checkbox"
-                name={field.key}
-                class="toggle toggle-primary"
-                checked={!!existingSettings[field.key]}
-              />
-            ) : (
-              <input
-                type={field.type}
-                name={field.key}
-                placeholder={field.placeholder}
-                class="input input-bordered w-full"
-                value={existingSettings[field.key] || field.defaultValue || ''}
-              />
-            )}
+        {/* Form */}
+        <form id="settings-form">
+          {provider.fields.map((field) => (
+            <div class="form-control mb-4">
+              <label class="label">
+                <span class="label-text font-medium">{field.label}</span>
+              </label>
+              {field.type === 'checkbox' ? (
+                <input
+                  type="checkbox"
+                  name={field.key}
+                  class="toggle toggle-primary"
+                  checked={!!existingSettings[field.key]}
+                />
+              ) : (
+                <input
+                  type={field.type}
+                  name={field.key}
+                  placeholder={field.placeholder}
+                  class="input input-bordered w-full"
+                  value={existingSettings[field.key] || field.defaultValue || ''}
+                />
+              )}
+            </div>
+          ))}
+
+          {/* Actions */}
+          <div class="flex gap-2 mt-6">
+            <button type="submit" class="btn btn-primary">
+              Save Configuration
+            </button>
+            <a href="/admin/plugins/notifications/providers" class="btn btn-ghost">
+              Cancel
+            </a>
           </div>
-        ))}
+        </form>
 
-        {/* Actions */}
-        <div class="flex gap-2 mt-6">
-          <button type="submit" class="btn btn-primary">Save Configuration</button>
-          <a href="/admin/plugins/notifications/providers" class="btn btn-ghost">Cancel</a>
-        </div>
-      </form>
-
-      {/* Status message */}
-      <div id="status-msg" class="mt-4 hidden"></div>
-    </div>
-  </AdminLayout>
-)}
+        {/* Status message */}
+        <div id="status-msg" class="mt-4 hidden" />
+      </div>
+    </AdminLayout>
+  )
+}
 
 <script>
   document.getElementById('settings-form').addEventListener('submit', async (e) => {

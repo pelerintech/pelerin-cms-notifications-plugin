@@ -26,10 +26,10 @@ export const POST: APIRoute = (context) => {
 /** Validation-fail Response: 422 with a fields map (matches ecomm's matrix). */
 function validationResponse(issues: { path: (string | number)[]; message: string }[]): Response {
   const fields = Object.fromEntries(issues.map((i) => [i.path.join('.'), i.message]));
-  return new Response(
-    JSON.stringify({ success: false, error: 'Validation failed', fields }),
-    { status: 422, headers: { 'Content-Type': 'application/json' } },
-  );
+  return new Response(JSON.stringify({ success: false, error: 'Validation failed', fields }), {
+    status: 422,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 function json(body: unknown, status: number): Response {
@@ -61,7 +61,7 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
             success: false,
             error: `Provider "${result.data.provider_name}" is not configured. Configure it on the Providers page first.`,
           },
-          400,
+          400
         );
       }
     }
@@ -77,7 +77,7 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
             error:
               'Rule with this event_pattern, template_id, provider_name, and channel already exists',
           },
-          409,
+          409
         );
       }
       throw err;
