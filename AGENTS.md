@@ -208,8 +208,20 @@ pelerin_notifications/
 
 ## 14. Development workflow
 
+Before committing, run all quality checks against the code you changed. Each check has different scope and expectations:
+
+| Check | Command | Scope | Must pass? |
+|---|---|---|---|
+| Format | `npm run format:check` | All files in repo (excluding ignores) | Yes — exit 0 |
+| Lint | `npm run lint` | `src/` + root config files (excludes `tests/`) | Yes — exit 0. If pre-existing errors exist (e.g. `no-explicit-any` in `pelerin-plugin-sdk.d.ts`), do **not** introduce new ones beyond them |
+| Type-check | `npm run type-check` | `src/**/*.ts` only (excludes `tests/` and `*.astro`) | Yes — exit 0. New `Cannot find module` errors or new type errors from your changes are failures |
+| Tests | `npm run test` | Full test suite via `tests/full-suite.test.ts` | Yes — exit 0 |
+| Coverage | `npm run test:coverage` | Same as tests, with coverage report | Informational — not gated, but useful to verify you haven't dropped coverage |
+
+Steps:
 1. **Read** this file and `reespec/decisions.md` before modifying code
-2. **Run all quality checks** before committing: `npm run format:check`, `npm run lint`, `npm run type-check`, and `npm run test` — all must pass (lint and type-check may report pre-existing warnings/errors unrelated to your change, but should not introduce new ones)
-3. **Test** accessors and handlers against the harness (`node --test`)
-4. **Run** the full suite: `node --test tests/full-suite.test.ts`
-5. **Manual smoke check**: `GET /api/plugins/notifications/rules` returns real rows; publish an event with `NOTIFICATIONS_DEV_MODE=true` and confirm a `notification_logs` row appears
+2. **Run checks relevant to your change** — if you only touched `src/`, run all four; if only tests, run format + test
+3. **Run** the full suite: `npm run test`
+4. **Manual smoke check**: `GET /api/plugins/notifications/rules` returns real rows; publish an event with `NOTIFICATIONS_DEV_MODE=true` and confirm a `notification_logs` row appears
+
+> The CI (`$include: .github/workflows/ci.yml`) runs `format:check` (fatal), `lint` (continue-on-error), `type-check` (continue-on-error), and `test` (fatal, with coverage). The dev workflow matches the CI — pre-existing lint/type-check noise does not block CI, but **format and test failures always do**.
