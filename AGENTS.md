@@ -210,15 +210,16 @@ pelerin_notifications/
 
 Before committing, run all quality checks against the code you changed. Each check has different scope and expectations:
 
-| Check | Command | Scope | Must pass? |
-|---|---|---|---|
-| Format | `npm run format:check` | All files in repo (excluding ignores) | Yes — exit 0 |
-| Lint | `npm run lint` | `src/` + root config files (excludes `tests/`) | Yes — exit 0. If pre-existing errors exist (e.g. `no-explicit-any` in `pelerin-plugin-sdk.d.ts`), do **not** introduce new ones beyond them |
-| Type-check | `npm run type-check` | `src/**/*.ts` only (excludes `tests/` and `*.astro`) | Yes — exit 0. New `Cannot find module` errors or new type errors from your changes are failures |
-| Tests | `npm run test` | Full test suite via `tests/full-suite.test.ts` | Yes — exit 0 |
-| Coverage | `npm run test:coverage` | Same as tests, with coverage report | Informational — not gated, but useful to verify you haven't dropped coverage |
+| Check      | Command                 | Scope                                                | Must pass?                                                                                                                                  |
+| ---------- | ----------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Format     | `npm run format:check`  | All files in repo (excluding ignores)                | Yes — exit 0                                                                                                                                |
+| Lint       | `npm run lint`          | `src/` + root config files (excludes `tests/`)       | Yes — exit 0. If pre-existing errors exist (e.g. `no-explicit-any` in `pelerin-plugin-sdk.d.ts`), do **not** introduce new ones beyond them |
+| Type-check | `npm run type-check`    | `src/**/*.ts` only (excludes `tests/` and `*.astro`) | Yes — exit 0. New `Cannot find module` errors or new type errors from your changes are failures                                             |
+| Tests      | `npm run test`          | Full test suite via `tests/full-suite.test.ts`       | Yes — exit 0                                                                                                                                |
+| Coverage   | `npm run test:coverage` | Same as tests, with coverage report                  | Informational — not gated, but useful to verify you haven't dropped coverage                                                                |
 
 Steps:
+
 1. **Read** this file and `reespec/decisions.md` before modifying code
 2. **Run checks relevant to your change** — if you only touched `src/`, run all four; if only tests, run format + test
 3. **Run** the full suite: `npm run test`
