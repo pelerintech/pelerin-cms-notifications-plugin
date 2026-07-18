@@ -5,7 +5,7 @@
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import { listRules } from '../../../lib/data/rules.ts';
-import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
+import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -35,14 +35,15 @@ try {
 }
 
 // Compute configured-status per distinct provider (not per rule) to avoid
-// N×rules lookups. Uses the shared available-providers handler (registry-
-// derived, mode-aware) so the badge definition matches the dropdown/guardrail.
-// In dev mode the handler returns all real providers; a rule whose provider
-// is not in that set (unconfigured in prod, or unknown) gets the warning badge.
+// N×rules lookups. Uses the shared accessor (registry-derived, mode-aware) so
+// the badge definition matches the dropdown/guardrail. In dev mode all real
+// providers are returned; a rule whose provider is not in the returned set
+// (unconfigured in prod, or unknown) gets the warning badge.
+const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
 const configuredProviders = new Set();
 try {
-  const result = await listAvailableProvidersHandler(sdk.db, 'email');
-  for (const p of result.body.data) {
+  const providers = await listAvailableProvidersForChannel(sdk.db, 'email', isDev);
+  for (const p of providers) {
     if (p.configured) configuredProviders.add(p.name);
   }
 } catch {

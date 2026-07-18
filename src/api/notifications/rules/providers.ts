@@ -17,15 +17,8 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../lib/handler-types';
-import { listProviderObjects } from '../../../providers/registry.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration
-import { isProviderConfigured } from '../../../lib/data/providers.ts';
-
-export interface AvailableProviderEntry {
-  name: string;
-  channels: string[];
-  configured: boolean;
-}
+import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
 
 export const GET: APIRoute = (context) => {
   const sdk = createPluginContext();
@@ -46,19 +39,7 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     const channel = url.searchParams.get('channel') || 'email';
     const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
 
-    const candidates = listProviderObjects().filter(
-      (p) => p.name !== 'local' && p.channels.includes(channel)
-    );
-
-    const entries: AvailableProviderEntry[] = [];
-    for (const p of candidates) {
-      const configured = await isProviderConfigured(db, p.name);
-      // In production, drop unconfigured providers from the selectable list.
-      // In dev, keep them so manual smoke testing works with zero credentials.
-      if (!isDev && !configured) continue;
-      entries.push({ name: p.name, channels: p.channels, configured });
-    }
-
+    const entries = await listAvailableProvidersForChannel(db, channel, isDev);
     return json({ success: true, data: entries }, 200);
   } catch (err: any) {
     const status = err.status ?? 500;

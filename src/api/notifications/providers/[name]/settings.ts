@@ -17,9 +17,9 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../../lib/handler-types';
-import { encrypt, decryptIfNeeded } from '../../../../lib/crypto.ts';
-import { getSetting, setSetting, listSettingsForProvider } from '../../../../lib/data/settings.ts';
-import { getProvider } from '../../../../providers/registry.ts';
+import { encrypt } from '../../../../lib/crypto.ts';
+import { setSetting } from '../../../../lib/data/settings.ts';
+import { getProviderSettings } from '../../../../lib/data/providers.ts';
 import '../../../../providers/index.ts'; // trigger provider auto-registration
 
 export const GET: APIRoute = (context) => {
@@ -39,12 +39,6 @@ function json(body: unknown, status: number): Response {
   });
 }
 
-/** Mask a secret value to `****<last4>` (or `****` if length ≤ 4). */
-function maskValue(value: string): string {
-  if (value.length <= 4) return '****';
-  return `****${value.slice(-4)}`;
-}
-
 export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
   try {
     await sdk.auth.requireAdmin(ctx.request);
@@ -53,23 +47,7 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
       return json({ success: false, error: 'Provider name is required' }, 400);
     }
 
-    const provider = getProvider(name);
-    const fields = provider?.getConfigSchema().fields;
-
-    // listSettingsForProvider strips the `${name}_` prefix; re-add it so the
-    // response uses full setting keys (matching getConfigSchema field keys and
-    // the admin UI form field names).
-    const prefix = `${name}_`;
-    const stored = await listSettingsForProvider(db, name);
-
-    const data: Record<string, string> = {};
-    for (const [strippedKey, rawValue] of Object.entries(stored)) {
-      const fullKey = `${prefix}${strippedKey}`;
-      const decrypted = decryptIfNeeded(rawValue);
-      const fieldType = fields?.[fullKey]?.type;
-      data[fullKey] = fieldType === 'password' ? maskValue(decrypted) : decrypted;
-    }
-
+    const data = await getProviderSettings(db, name);
     return json({ success: true, data, provider: name }, 200);
   } catch (err: any) {
     const status = err.status ?? 500;

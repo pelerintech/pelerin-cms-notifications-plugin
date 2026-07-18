@@ -14,9 +14,67 @@
  * providers-page card badges.
  */
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
-import { getProvider } from '../../providers/registry.ts';
-import { getSetting } from './settings.ts';
+import { getProvider, listProviderObjects } from '../../providers/registry.ts';
+import { getSetting, listSettingsForProvider } from './settings.ts';
 import { decryptIfNeeded } from '../crypto.ts';
+
+/** Mask a secret value to `****<last4>` (or `****` if length ≤ 4). */
+function maskValue(value: string): string {
+  if (value.length <= 4) return '****';
+  return `****${value.slice(-4)}`;
+}
+
+/**
+ * Get decrypted provider settings with password-type fields masked.
+ * Returns a record of full setting keys → values (e.g. `sendgrid_api_key`).
+ */
+export async function getProviderSettings(
+  db: LibSQLDatabase,
+  providerName: string
+): Promise<Record<string, string>> {
+  const provider = getProvider(providerName);
+  const fields = provider?.getConfigSchema().fields;
+  const prefix = `${providerName}_`;
+  const stored = await listSettingsForProvider(db, providerName);
+  const data: Record<string, string> = {};
+  for (const [strippedKey, rawValue] of Object.entries(stored)) {
+    const fullKey = `${prefix}${strippedKey}`;
+    const decrypted = decryptIfNeeded(rawValue);
+    const fieldType = fields?.[fullKey]?.type;
+    data[fullKey] = fieldType === 'password' ? maskValue(decrypted) : decrypted;
+  }
+  return data;
+}
+
+/** Info about an available provider for the rule-editor dropdown. */
+export interface AvailableProviderInfo {
+  name: string;
+  channels: string[];
+  configured: boolean;
+}
+
+/**
+ * List providers for a channel, filtered by dev mode.
+ * In production only configured providers are returned.
+ * In dev mode all real providers are returned (with `configured` reported).
+ * The local provider is always excluded.
+ */
+export async function listAvailableProvidersForChannel(
+  db: LibSQLDatabase,
+  channel: string,
+  isDev: boolean
+): Promise<AvailableProviderInfo[]> {
+  const candidates = listProviderObjects().filter(
+    (p) => p.name !== 'local' && p.channels.includes(channel)
+  );
+  const entries: AvailableProviderInfo[] = [];
+  for (const p of candidates) {
+    const configured = await isProviderConfigured(db, p.name);
+    if (!isDev && !configured) continue;
+    entries.push({ name: p.name, channels: p.channels, configured });
+  }
+  return entries;
+}
 
 /**
  * Returns true only when the named provider is registered, is not `local`, has

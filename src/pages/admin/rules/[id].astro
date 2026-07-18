@@ -5,8 +5,8 @@
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import { listTemplates } from '../../../lib/data/templates.ts';
-import { listRules, getRule } from '../../../lib/data/rules.ts';
-import { listAvailableProvidersHandler } from '../../../api/notifications/rules/providers.ts';
+import { getRule } from '../../../lib/data/rules.ts';
+import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
@@ -33,13 +33,13 @@ try {
 }
 
 // Available providers (registry-derived, channel+configured-filtered,
-// local-excluded, mode-aware) via the handler directly. Replaces the former
-// hardcoded `availableProviders` array that drifted out of sync with the registry.
+// local-excluded, mode-aware) via the shared accessor. Replaces the former
+// hardcoded `availableProviders` array and the broken endpoint import.
+const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
 let availableProviders = [];
 try {
   const channel = rule?.channel || 'email';
-  const result = await listAvailableProvidersHandler(sdk.db, channel);
-  availableProviders = result.body.data;
+  availableProviders = await listAvailableProvidersForChannel(sdk.db, channel, isDev);
 } catch {
   // Silently fail — empty dropdown shown
 }
