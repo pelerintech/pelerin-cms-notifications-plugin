@@ -4,7 +4,7 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
-import { getProviderSettings } from '../../../../lib/data/providers.ts';
+import { getProviderSettings } from '../../../lib/data/providers.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
