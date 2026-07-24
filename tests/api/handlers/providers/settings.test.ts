@@ -22,7 +22,7 @@ ensureLoader();
 const { runGet, runPost } =
   await import('../../../../src/api/notifications/providers/[name]/settings.ts');
 
-describe('runGet (providers/[name]/settings) — auth + masked retrieval', () => {
+describe('runGet (providers/[name]/settings) — auth + masked retrieval + unknown provider', () => {
   let db: any;
   beforeEach(async () => {
     const t = await createTestDb();
@@ -35,6 +35,18 @@ describe('runGet (providers/[name]/settings) — auth + masked retrieval', () =>
       url: 'http://localhost/api/plugins/notifications/providers/sendgrid/settings',
       params: { name: 'sendgrid' },
     });
+  });
+
+  test('unknown provider → 404 + success:false', async () => {
+    const res = await runGet({
+      db,
+      sdk: makeFakeSdk(),
+      ctx: makeCtx({ url: 'http://localhost/api', params: { name: 'nonexistent' } }),
+    });
+    assert.equal(res.status, 404, `expected 404, got ${res.status}`);
+    const b = await res.json();
+    assert.equal(b.success, false);
+    assert.equal(b.error, 'Unknown provider');
   });
 
   test('happy-path: password field is masked to ****<last4>', async () => {
@@ -75,7 +87,7 @@ describe('runGet (providers/[name]/settings) — auth + masked retrieval', () =>
   });
 });
 
-describe('runPost (providers/[name]/settings) — auth + save', () => {
+describe('runPost (providers/[name]/settings) — auth + save + unknown provider + key allowlist + mask regex', () => {
   let db: any;
   beforeEach(async () => {
     const t = await createTestDb();
@@ -89,6 +101,57 @@ describe('runPost (providers/[name]/settings) — auth + save', () => {
       body: { sendgrid_api_key: 'SG.new' },
       params: { name: 'sendgrid' },
     });
+  });
+
+  test('unknown provider → 404 + success:false', async () => {
+    const res = await runPost({
+      db,
+      sdk: makeFakeSdk(),
+      ctx: makeCtx({
+        url: 'http://localhost/api',
+        body: { sendgrid_api_key: 'SG.new' },
+        params: { name: 'nonexistent' },
+      }),
+    });
+    assert.equal(res.status, 404, `expected 404, got ${res.status}`);
+    const b = await res.json();
+    assert.equal(b.success, false);
+    assert.equal(b.error, 'Unknown provider');
+  });
+
+  test('unknown key is silently skipped (not written)', async () => {
+    const res = await runPost({
+      db,
+      sdk: makeFakeSdk(),
+      ctx: makeCtx({
+        url: 'http://localhost/api',
+        body: { sendgrid_api_key: 'SG.valid', ses_access_key: 'AKIA...' },
+        params: { name: 'sendgrid' },
+      }),
+    });
+    assert.equal(res.status, 200);
+    // Only sendgrid key should be saved, ses_access_key should be skipped
+    const stored = await getSetting(db, 'sendgrid_api_key');
+    assert.ok(stored, 'sendgrid_api_key should be saved');
+    assert.equal(decryptIfNeeded(stored!), 'SG.valid');
+    const sesStored = await getSetting(db, 'ses_access_key');
+    assert.equal(sesStored, null, 'ses_access_key should NOT be saved (unknown key)');
+  });
+
+  test('real credential starting with asterisks is saved (not skipped as mask)', async () => {
+    const res = await runPost({
+      db,
+      sdk: makeFakeSdk(),
+      ctx: makeCtx({
+        url: 'http://localhost/api',
+        body: { sendgrid_api_key: '****real-api-key' },
+        params: { name: 'sendgrid' },
+      }),
+    });
+    assert.equal(res.status, 200);
+    const stored = await getSetting(db, 'sendgrid_api_key');
+    assert.ok(stored, 'credential starting with asterisks should be saved');
+    assert.equal(decryptIfNeeded(stored!), '****real-api-key');
   });
 
   test('happy-path: save settings → 200 + data.saved', async () => {

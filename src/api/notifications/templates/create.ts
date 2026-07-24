@@ -12,12 +12,13 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../lib/handler-types';
+import { toDb } from '../../../lib/handler-types';
 import { createTemplate } from '../../../lib/data/templates.ts';
-import { templateSchema } from '../../../schemas/template.schema.ts';
+import { createTemplateSchema } from '../../../schemas/template.schema.ts';
 
 export const POST: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runPost({ db: sdk.db, sdk, ctx: context });
+  return runPost({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 function json(body: unknown, status: number): Response {
@@ -32,7 +33,7 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
     await sdk.auth.requireAdmin(ctx.request);
     const body = await ctx.request.json();
 
-    const result = templateSchema.safeParse(body);
+    const result = createTemplateSchema.safeParse(body);
     if (!result.success) {
       const fields = Object.fromEntries(
         result.error.issues.map((i) => [i.path.join('.'), i.message])

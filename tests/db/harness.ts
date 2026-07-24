@@ -57,9 +57,22 @@ export async function createTestDb(): Promise<TestDb> {
 
   // Create all tables. Drop order doesn't matter for CREATE; order only
   // matters for reset/seed clears (handled by resetDb).
+  // Create all tables. Drop order doesn't matter for CREATE; order only
+  // matters for reset/seed clears (handled by resetDb).
   for (const [name, table] of tables) {
     await db.run(sql.raw(createTableSQL(name, table)));
   }
+
+  // Add unique indexes that the harness's createTableSQL doesn't introspect
+  // (Drizzle table-level constraints are not accessible via COLUMNS_SYMBOL).
+  await db.run(
+    sql.raw(`CREATE UNIQUE INDEX IF NOT EXISTS "notification_rules_unique_rule"
+    ON "notification_rules" ("event_pattern", "template_id", "provider_name", "channel")`)
+  );
+  await db.run(
+    sql.raw(`CREATE UNIQUE INDEX IF NOT EXISTS "notification_settings_key_unique"
+    ON "notification_settings" ("key")`)
+  );
 
   const cleanup = async () => {
     // libSQL in-memory client is GC'd; nothing to close explicitly.

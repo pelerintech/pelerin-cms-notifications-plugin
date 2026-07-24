@@ -12,11 +12,12 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../lib/handler-types';
+import { toDb } from '../../../lib/handler-types';
 import { listLogs } from '../../../lib/data/logs.ts';
 
 export const GET: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runGet({ db: sdk.db, sdk, ctx: context });
+  return runGet({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 function json(body: unknown, status: number): Response {

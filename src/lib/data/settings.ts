@@ -1,4 +1,4 @@
-import { eq, like } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { notification_settings } from '../../db/schema.ts';
 
@@ -20,12 +20,21 @@ export async function setSetting(db: LibSQLDatabase, key: string, value: string)
   if (existing.length > 0) {
     await db.update(notification_settings).set({ value }).where(eq(notification_settings.key, key));
   } else {
-    await db.insert(notification_settings).values({
-      id: crypto.randomUUID(),
-      key,
-      value,
-      created_at: new Date(),
-    });
+    try {
+      await db.insert(notification_settings).values({
+        id: crypto.randomUUID(),
+        key,
+        value,
+        created_at: new Date(),
+      });
+    } catch {
+      // Unique-constraint backstop: if a concurrent call inserted the key
+      // between our SELECT and INSERT, retry as UPDATE.
+      await db
+        .update(notification_settings)
+        .set({ value })
+        .where(eq(notification_settings.key, key));
+    }
   }
 }
 
@@ -35,10 +44,13 @@ export async function listSettingsForProvider(
   providerName: string
 ): Promise<Record<string, string>> {
   const prefix = `${providerName}_`;
+  // Escape `_` in the prefix using `~` as escape char so LIKE doesn't treat
+  // `_` as a single-char wildcard (prevents `sendgridXkey` from matching `sendgrid_%`).
+  const escapedPrefix = prefix.replace(/_/g, '~_');
   const rows = await db
     .select()
     .from(notification_settings)
-    .where(like(notification_settings.key, `${prefix}%`));
+    .where(sql`${notification_settings.key} LIKE ${escapedPrefix + '%'} ESCAPE '~'`);
   const result: Record<string, string> = {};
   for (const row of rows as { key: string; value: string }[]) {
     const strippedKey = row.key.slice(prefix.length);

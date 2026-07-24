@@ -66,6 +66,31 @@ describe('runPost (rules/create) — auth + validation + happy + guardrail + dup
     });
   });
 
+  test('non-existent template_id → 400 + success:false', async () => {
+    setDevMode(true);
+    const { db, cleanup } = await createTestDb();
+    try {
+      const sdk = makeFakeSdk();
+      const ctx = makeCtx({
+        url: 'http://localhost/api/plugins/notifications/rules',
+        body: {
+          event_pattern: 'shop.order.created',
+          template_id: 'does-not-exist',
+          provider_name: 'sendgrid',
+          to: 'a@b.com',
+          channel: 'email',
+        },
+      });
+      const res = await runPost({ db, sdk, ctx });
+      assert.equal(res.status, 400, `expected 400, got ${res.status}`);
+      const b = await res.json();
+      assert.equal(b.success, false);
+      assert.equal(b.error, 'Template not found');
+    } finally {
+      await cleanup();
+    }
+  });
+
   test('happy-path (dev mode): valid body → 201 + success:true + data.id', async () => {
     setDevMode(true);
     const { db, cleanup } = await createTestDb();

@@ -21,6 +21,17 @@ async function getSettingDecrypted(db: LibSQLDatabase, key: string): Promise<str
   return raw ? decryptIfNeeded(raw) : undefined;
 }
 
+/** Default send timeout (30s). Override via setSendTimeoutForTests(). */
+export let SEND_TIMEOUT_MS = 30_000;
+
+/**
+ * Test seam: override the send timeout.
+ * Call in test setup; restore (e.g. back to 30_000) in teardown.
+ */
+export function setSendTimeoutForTests(ms: number): void {
+  SEND_TIMEOUT_MS = ms;
+}
+
 export const brevoProvider: NotificationProvider = {
   name: 'brevo',
   channels: ['email'],
@@ -55,9 +66,14 @@ export const brevoProvider: NotificationProvider = {
       return { success: false, error: 'Brevo API URL not configured' };
     }
 
+    const fromEmail = process.env.BREVO_FROM_EMAIL;
+    if (!fromEmail) {
+      return { success: false, error: 'Brevo from email not configured' };
+    }
+
     const emailData = {
       to: params.to.map((email: string) => ({ email })),
-      from: { email: process.env.BREVO_FROM_EMAIL || 'notifications@example.com' },
+      sender: { email: fromEmail },
       subject: params.subject,
       htmlContent: params.bodyHtml,
       textContent: params.bodyText,
@@ -73,6 +89,7 @@ export const brevoProvider: NotificationProvider = {
           'api-key': apiKey,
         },
         body: JSON.stringify(emailData),
+        signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -83,6 +100,9 @@ export const brevoProvider: NotificationProvider = {
       const data = (await response.json()) as { messageId?: string; message_id?: string };
       return { success: true, messageId: data.messageId || data.message_id || undefined };
     } catch (err: any) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        return { success: false, error: `Brevo send timed out after ${SEND_TIMEOUT_MS}ms` };
+      }
       return { success: false, error: `Brevo request failed: ${err.message}` };
     }
   },

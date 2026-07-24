@@ -12,10 +12,12 @@ const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
 const originalDevMode = process.env.NOTIFICATIONS_DEV_MODE;
 const originalSendgridEnv = process.env.SENDGRID_API_KEY;
+const originalFromEmail = process.env.SENDGRID_FROM_EMAIL;
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
   delete process.env.SENDGRID_API_KEY;
+  process.env.SENDGRID_FROM_EMAIL = 'sg@test.com';
 });
 
 after(() => {
@@ -25,6 +27,8 @@ after(() => {
   else process.env.NOTIFICATIONS_DEV_MODE = originalDevMode;
   if (originalSendgridEnv === undefined) delete process.env.SENDGRID_API_KEY;
   else process.env.SENDGRID_API_KEY = originalSendgridEnv;
+  if (originalFromEmail === undefined) delete process.env.SENDGRID_FROM_EMAIL;
+  else process.env.SENDGRID_FROM_EMAIL = originalFromEmail;
 });
 
 describe('dispatch credential pass-through (structural)', () => {

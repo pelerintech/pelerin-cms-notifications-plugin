@@ -1,6 +1,6 @@
 import { eq, and, like, desc, count } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
-import { notification_templates } from '../../db/schema.ts';
+import { notification_templates, notification_rules } from '../../db/schema.ts';
 
 /** A notification template row as returned by accessors. */
 export interface TemplateRow {
@@ -15,8 +15,8 @@ export interface TemplateRow {
 
 /** Error thrown by template accessors with a machine-readable code. */
 export class TemplateError extends Error {
-  code: 'not_found';
-  constructor(code: 'not_found', message: string) {
+  code: 'not_found' | 'in_use';
+  constructor(code: 'not_found' | 'in_use', message: string) {
     super(message);
     this.code = code;
     this.name = 'TemplateError';
@@ -122,7 +122,18 @@ export async function updateTemplate(
   return updated!;
 }
 
-/** Delete a template by id. */
+/** Delete a template by id. Throws TemplateError('in_use') if rules reference it. */
 export async function deleteTemplate(db: LibSQLDatabase, id: string): Promise<void> {
+  // Check if any rules reference this template
+  const referencingRules = await db
+    .select({ id: notification_rules.id })
+    .from(notification_rules)
+    .where(eq(notification_rules.template_id, id));
+  if (referencingRules.length > 0) {
+    throw new TemplateError(
+      'in_use',
+      `Template is referenced by ${referencingRules.length} rule(s). Delete or update those rules first.`
+    );
+  }
   await db.delete(notification_templates).where(eq(notification_templates.id, id));
 }

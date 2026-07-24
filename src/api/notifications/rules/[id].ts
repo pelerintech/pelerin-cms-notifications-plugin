@@ -12,19 +12,21 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../lib/handler-types';
+import { toDb } from '../../../lib/handler-types';
 import { updateRule, deleteRule, getRule, RuleError } from '../../../lib/data/rules.ts';
+import { getTemplate } from '../../../lib/data/templates.ts';
 import { isProviderConfigured } from '../../../lib/data/providers.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration for isProviderConfigured
 import { ruleSchema } from '../../../schemas/rule.schema.ts';
 
 export const PUT: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runPut({ db: sdk.db, sdk, ctx: context });
+  return runPut({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 export const DELETE: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runDelete({ db: sdk.db, sdk, ctx: context });
+  return runDelete({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 function json(body: unknown, status: number): Response {
@@ -47,6 +49,14 @@ export async function runPut({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
         result.error.issues.map((i) => [i.path.join('.'), i.message])
       );
       return json({ success: false, error: 'Validation failed', fields }, 422);
+    }
+
+    // Check that the referenced template exists if template_id is being changed
+    if (result.data.template_id !== undefined) {
+      const template = await getTemplate(db, result.data.template_id);
+      if (!template) {
+        return json({ success: false, error: 'Template not found' }, 400);
+      }
     }
 
     // Mode-aware guardrail: in production, reject changing the provider to one
@@ -72,6 +82,9 @@ export async function runPut({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     } catch (err: any) {
       if (err instanceof RuleError && err.code === 'not_found') {
         return json({ success: false, error: 'Rule not found' }, 404);
+      }
+      if (err instanceof RuleError && err.code === 'duplicate') {
+        return json({ success: false, error: 'Rule with this configuration already exists' }, 409);
       }
       throw err;
     }

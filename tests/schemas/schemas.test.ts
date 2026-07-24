@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { ruleSchema } from '../../src/schemas/rule.schema.ts';
-import { templateSchema } from '../../src/schemas/template.schema.ts';
+import { templateSchema, createTemplateSchema } from '../../src/schemas/template.schema.ts';
 
 test('ruleSchema accepts a valid rule', () => {
   const result = ruleSchema.safeParse({
@@ -28,10 +28,44 @@ test('ruleSchema rejects empty event_pattern', () => {
   assert.strictEqual(result.success, false);
 });
 
-test('templateSchema accepts a valid template', () => {
+test('templateSchema accepts a template with no body fields (partial updates)', () => {
   const result = templateSchema.safeParse({
     name: 'n',
     subject: 's',
+  });
+  assert.strictEqual(
+    result.success,
+    true,
+    'templateSchema should allow missing body for partial updates'
+  );
+});
+
+test('createTemplateSchema rejects a template with no body fields', () => {
+  const result = createTemplateSchema.safeParse({
+    name: 'n',
+    subject: 's',
+  });
+  assert.strictEqual(
+    result.success,
+    false,
+    'createTemplateSchema requires at least one body field'
+  );
+});
+
+test('createTemplateSchema accepts a template with body_html', () => {
+  const result = createTemplateSchema.safeParse({
+    name: 'n',
+    subject: 's',
+    body_html: '<p>hi</p>',
+  });
+  assert.strictEqual(result.success, true);
+});
+
+test('createTemplateSchema accepts a template with body_text', () => {
+  const result = createTemplateSchema.safeParse({
+    name: 'n',
+    subject: 's',
+    body_text: 'hi',
   });
   assert.strictEqual(result.success, true);
 });

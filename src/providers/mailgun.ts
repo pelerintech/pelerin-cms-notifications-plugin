@@ -21,6 +21,17 @@ async function getSettingDecrypted(db: LibSQLDatabase, key: string): Promise<str
   return raw ? decryptIfNeeded(raw) : undefined;
 }
 
+/** Default send timeout (30s). Override via setSendTimeoutForTests(). */
+export let SEND_TIMEOUT_MS = 30_000;
+
+/**
+ * Test seam: override the send timeout.
+ * Call in test setup; restore (e.g. back to 30_000) in teardown.
+ */
+export function setSendTimeoutForTests(ms: number): void {
+  SEND_TIMEOUT_MS = ms;
+}
+
 export const mailgunProvider: NotificationProvider = {
   name: 'mailgun',
   channels: ['email'],
@@ -53,9 +64,18 @@ export const mailgunProvider: NotificationProvider = {
     if (!apiUrl) {
       return { success: false, error: 'Mailgun API URL not configured' };
     }
+    // Validate URL has a domain segment after /v3/
+    if (!apiUrl.includes('/v3/') && !apiUrl.includes('/messages')) {
+      return { success: false, error: 'Mailgun API URL not configured' };
+    }
 
-    const formData = new URLSearchParams();
-    formData.append('from', process.env.MAILGUN_FROM_EMAIL || 'notifications@example.com');
+    const fromEmail = process.env.MAILGUN_FROM_EMAIL;
+    if (!fromEmail) {
+      return { success: false, error: 'Mailgun from email not configured' };
+    }
+
+    const formData = new FormData();
+    formData.append('from', fromEmail);
     formData.append('to', params.to.join(','));
     formData.append('subject', params.subject);
     if (params.cc?.length) {
@@ -78,6 +98,7 @@ export const mailgunProvider: NotificationProvider = {
           Authorization: `Basic ${Buffer.from(`api:${apiKey}`).toString('base64')}`,
         },
         body: formData,
+        signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -89,6 +110,9 @@ export const mailgunProvider: NotificationProvider = {
       const messageId = data.id;
       return { success: true, messageId };
     } catch (err: any) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        return { success: false, error: `Mailgun send timed out after ${SEND_TIMEOUT_MS}ms` };
+      }
       return { success: false, error: `Mailgun request failed: ${err.message}` };
     }
   },

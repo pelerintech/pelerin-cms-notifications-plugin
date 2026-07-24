@@ -13,14 +13,16 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../lib/handler-types';
+import { toDb } from '../../../lib/handler-types';
 import { createRule, RuleError } from '../../../lib/data/rules.ts';
+import { getTemplate } from '../../../lib/data/templates.ts';
 import { isProviderConfigured } from '../../../lib/data/providers.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration for isProviderConfigured
 import { ruleSchema } from '../../../schemas/rule.schema.ts';
 
 export const POST: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runPost({ db: sdk.db, sdk, ctx: context });
+  return runPost({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 /** Validation-fail Response: 422 with a fields map (matches ecomm's matrix). */
@@ -47,6 +49,12 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
     const result = ruleSchema.safeParse(body);
     if (!result.success) {
       return validationResponse(result.error.issues);
+    }
+
+    // Check that the referenced template exists
+    const template = await getTemplate(db, result.data.template_id);
+    if (!template) {
+      return json({ success: false, error: 'Template not found' }, 400);
     }
 
     // Mode-aware guardrail: in production, reject a rule whose provider is not

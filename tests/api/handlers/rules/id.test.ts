@@ -66,7 +66,11 @@ describe('runPut (rules/[id]) — auth + 404 + happy + guardrail', () => {
       const res = await runPut({
         db,
         sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api', body: { to: 'x' }, params: { id: 'missing' } }),
+        ctx: makeCtx({
+          url: 'http://localhost/api',
+          body: { to: 'admin@example.com' },
+          params: { id: 'missing' },
+        }),
       });
       assert.equal(res.status, 404);
       const b = await res.json();
@@ -120,6 +124,30 @@ describe('runPut (rules/[id]) — auth + 404 + happy + guardrail', () => {
       assert.match(b.error, /not configured/i);
       const r = await getRule(db, id);
       assert.equal(r!.provider_name, 'sendgrid');
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test('duplicate: update event_pattern to collide with existing rule → 409', async () => {
+    setDevMode(true);
+    const { db, cleanup } = await createTestDb();
+    try {
+      const { templateId, exactRuleId, wildcardRuleId } = await seedMinimal(db);
+      // Try to change the wildcard rule's event_pattern to the exact rule's value
+      const res = await runPut({
+        db,
+        sdk: makeFakeSdk(),
+        ctx: makeCtx({
+          url: 'http://localhost/api',
+          body: { event_pattern: 'shop.order.created' },
+          params: { id: wildcardRuleId },
+        }),
+      });
+      assert.equal(res.status, 409, `expected 409, got ${res.status}`);
+      const b = await res.json();
+      assert.equal(b.success, false);
+      assert.match(b.error, /already exists/i);
     } finally {
       await cleanup();
     }

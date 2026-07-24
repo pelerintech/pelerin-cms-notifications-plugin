@@ -19,6 +19,9 @@ test('setSetting on existing key upserts (not duplicate insert)', async () => {
   const { notification_settings } = await import('../../../src/db/schema.ts');
   const rows = await db.select().from(notification_settings);
   assert.strictEqual(rows.length, 1);
+  // The unique index on notification_settings.key (added in task 2) is the backstop
+  // for concurrent races: if two setSetting calls race on INSERT, the second hits
+  // the constraint and the try/catch in setSetting retries as UPDATE.
 });
 
 test('listSettingsForProvider returns only that provider keys with prefix stripped', async () => {
@@ -44,6 +47,27 @@ test('listSettingsForProvider returns only that provider keys with prefix stripp
   });
   const result = await listSettingsForProvider(db, 'smtp');
   assert.deepStrictEqual(result, { host: 'localhost', port: '587' });
+});
+
+test('listSettingsForProvider does not match keys with underscore-substituting chars', async () => {
+  const { db } = await createTestDb();
+  const now = new Date();
+  await insertFixture(db, 'notification_settings', {
+    id: 's1',
+    key: 'sendgrid_api_key',
+    value: 'real-key',
+    created_at: now,
+  });
+  await insertFixture(db, 'notification_settings', {
+    id: 's2',
+    key: 'sendgridXkey',
+    value: 'should-not-match',
+    created_at: now,
+  });
+  const result = await listSettingsForProvider(db, 'sendgrid');
+  // 'sendgridXkey' begins with 'sendgrid' + 'Xkey' where 'X' matches '_' in LIKE
+  // Only 'api_key' (stripped from 'sendgrid_api_key') should be returned
+  assert.deepStrictEqual(result, { api_key: 'real-key' });
 });
 
 test('getSetting on missing key returns null', async () => {

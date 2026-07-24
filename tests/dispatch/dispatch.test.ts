@@ -155,6 +155,31 @@ test('dispatchEvent resolves cc and bcc from payload', async () => {
   assert.strictEqual(logs[0].bcc, 'e@f.com');
 });
 
+test('dispatchEvent catch block creates a failure log on unexpected exception', async () => {
+  process.env.NOTIFICATIONS_DEV_MODE = 'true';
+  const { db } = await createTestDb();
+  const { exactRuleId } = await seedMinimal(db);
+
+  // Use a payload value that throws on String() conversion (null-prototype object)
+  // to trigger an exception during interpolation inside the dispatch loop.
+  // Adjust: the seed template subject is 'Order {{ order_id }}'
+  const payload = {
+    customer_email: 'buyer@example.com',
+    order_id: Object.create(null), // causes TypeError in String()
+  };
+
+  await dispatchEvent(db, 'shop.order.created', payload);
+
+  // Even though dispatch threw, a failure log should exist
+  const logs = await db.select().from(notification_logs);
+  assert.ok(logs.length >= 1, 'expected at least one log row from the catch block');
+  // The rule that threw should have a failure log
+  const ruleLog = logs.find((l: any) => l.rule_id === exactRuleId);
+  assert.ok(ruleLog, 'expected a log row for the exact rule from catch');
+  assert.strictEqual(ruleLog.success, false);
+  assert.ok(ruleLog.error, 'expected error message');
+});
+
 // Cleanup
 test('restore env', () => {
   if (originalDevMode === undefined) {

@@ -21,6 +21,82 @@ async function getSettingDecrypted(db: LibSQLDatabase, key: string): Promise<str
   return raw ? decryptIfNeeded(raw) : undefined;
 }
 
+/** Default send timeout (30s). Override via setSendTimeoutForTests(). */
+export let SEND_TIMEOUT_MS = 30_000;
+
+/**
+ * Test seam: override the send timeout.
+ * Call in test setup; restore (e.g. back to 30_000) in teardown.
+ */
+export function setSendTimeoutForTests(ms: number): void {
+  SEND_TIMEOUT_MS = ms;
+}
+
+/** Shape of the nodemailer transport config object. */
+export interface TransportConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  requireTLS?: boolean;
+  tls?: { rejectUnauthorized: boolean };
+  auth: { user: string; pass: string };
+  connectionTimeout: number;
+  greetingTimeout: number;
+  socketTimeout: number;
+}
+
+/** Shape of the sendMail options. */
+export interface SendMailOptions {
+  from: string;
+  to: string;
+  cc?: string;
+  bcc?: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}
+
+/** Shape returned by a nodemailer transport. */
+export interface NodemailerTransport {
+  sendMail(opts: SendMailOptions): Promise<{ messageId: string }>;
+}
+
+/**
+ * Test seam: override nodemailer transport creation.
+ * Default: dynamic-import nodemailer and call createTransport.
+ * Override via setTransportFactory() in tests to capture transport config.
+ */
+export let transportFactory: (config: TransportConfig) => Promise<NodemailerTransport> = async (
+  config: TransportConfig
+) => {
+  const nodemailer = await import('nodemailer');
+  return nodemailer.createTransport(config);
+};
+
+export function setTransportFactory(
+  factory: (config: TransportConfig) => Promise<NodemailerTransport>
+): void {
+  transportFactory = factory;
+}
+
+export function resetTransportFactory(): void {
+  transportFactory = async (config: TransportConfig) => {
+    const nodemailer = await import('nodemailer');
+    return nodemailer.createTransport(config);
+  };
+}
+
+/** System-level connection error codes that indicate a send timeout. */
+const CONNECTION_ERROR_CODES = new Set([
+  'EDNS',
+  'ESOCKET',
+  'ETIMEDOUT',
+  'ENOTFOUND',
+  'ECONNREFUSED',
+  'ENETUNREACH',
+  'ECONNRESET',
+]);
+
 export const smtpProvider: NotificationProvider = {
   name: 'smtp',
   channels: ['email'],
@@ -52,7 +128,7 @@ export const smtpProvider: NotificationProvider = {
         smtp_tls: {
           type: 'boolean',
           label: 'Use TLS',
-          description: 'Enable TLS encryption for the connection',
+          description: 'Require TLS (reject unauthorized connections)',
         },
       },
     };
@@ -72,21 +148,28 @@ export const smtpProvider: NotificationProvider = {
     }
 
     try {
-      // Dynamic import of nodemailer — only loaded when SMTP is used
-      const nodemailer = await import('nodemailer');
-      const transporter = nodemailer.createTransport({
+      const transporter = await transportFactory({
         host,
         port,
         secure: port === 465,
+        requireTLS: useTls || undefined,
         tls: useTls ? { rejectUnauthorized: true } : undefined,
         auth: {
           user: username,
           pass: password,
         },
+        connectionTimeout: SEND_TIMEOUT_MS,
+        greetingTimeout: SEND_TIMEOUT_MS,
+        socketTimeout: SEND_TIMEOUT_MS,
       });
 
+      const smtpFromEmail = process.env.SMTP_FROM_EMAIL;
+      if (!smtpFromEmail) {
+        return { success: false, error: 'SMTP from email not configured' };
+      }
+
       const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM_EMAIL || 'notifications@example.com',
+        from: smtpFromEmail,
         to: params.to.join(','),
         cc: params.cc?.join(','),
         bcc: params.bcc?.join(','),
@@ -97,6 +180,10 @@ export const smtpProvider: NotificationProvider = {
 
       return { success: true, messageId: info.messageId };
     } catch (err: any) {
+      // Treat any system-level connection error as a send timeout
+      if (CONNECTION_ERROR_CODES.has(err.code) || err.message?.toLowerCase().includes('timeout')) {
+        return { success: false, error: `SMTP send timed out after ${SEND_TIMEOUT_MS}ms` };
+      }
       return { success: false, error: `SMTP request failed: ${err.message}` };
     }
   },

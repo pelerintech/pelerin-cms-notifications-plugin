@@ -1,8 +1,31 @@
-import { describe, it } from 'node:test';
+import { describe, it, test, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
+import { createTestDb } from '../db/harness.ts';
+import { setSetting } from '../../src/lib/data/settings.ts';
+import { encrypt } from '../../src/lib/crypto.ts';
+
+const KEY = 'test-encryption-key-32+chars-long';
+const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
+const originalFromEmail = process.env.SMTP_FROM_EMAIL;
+const originalDev = process.env.NOTIFICATIONS_DEV_MODE;
+
+before(() => {
+  process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
+  process.env.SMTP_FROM_EMAIL = 'sender@example.com';
+});
+
+after(() => {
+  if (originalKey === undefined) delete process.env.NOTIFICATIONS_ENCRYPTION_KEY;
+  else process.env.NOTIFICATIONS_ENCRYPTION_KEY = originalKey;
+  if (originalFromEmail === undefined) delete process.env.SMTP_FROM_EMAIL;
+  else process.env.SMTP_FROM_EMAIL = originalFromEmail;
+  if (originalDev === undefined) delete process.env.NOTIFICATIONS_DEV_MODE;
+  else process.env.NOTIFICATIONS_DEV_MODE = originalDev;
+});
+
 import { smtp } from '../../src/providers/smtp.ts';
 
-describe('SMTP provider', () => {
+describe('SMTP provider metadata', () => {
   it('provider name is "smtp"', () => {
     assert.strictEqual(smtp.name, 'smtp');
   });
@@ -18,5 +41,66 @@ describe('SMTP provider', () => {
     assert.ok(schema.requiredKeys.includes('smtp_username'), 'must require smtp_username');
     assert.ok(schema.requiredKeys.includes('smtp_password'), 'must require smtp_password');
     assert.ok(schema.requiredKeys.includes('smtp_tls'), 'must require smtp_tls');
+  });
+});
+
+describe('SMTP requireTLS behavior', () => {
+  let db: any;
+  let mod: any;
+  let capturedConfig: any;
+
+  beforeEach(async () => {
+    const t = await createTestDb();
+    db = t.db;
+    await setSetting(db, 'smtp_host', encrypt('smtp.example.com'));
+    await setSetting(db, 'smtp_port', encrypt('587'));
+    await setSetting(db, 'smtp_username', encrypt('user'));
+    await setSetting(db, 'smtp_password', encrypt('pass'));
+    mod = await import('../../src/providers/smtp.ts');
+    capturedConfig = null;
+  });
+
+  afterEach(() => {
+    mod?.resetTransportFactory?.();
+    mod?.setSendTimeoutForTests?.(30_000);
+  });
+
+  test('smtp_tls=true adds requireTLS: true to transport config', async () => {
+    await setSetting(db, 'smtp_tls', encrypt('true'));
+    mod.setTransportFactory(async (config: any) => {
+      capturedConfig = config;
+      return { sendMail: async () => ({ messageId: 'test-id' }) };
+    });
+    const result = await mod.smtp.send({ to: ['a@b.com'], subject: 'Hello' }, db);
+    assert.strictEqual(result.success, true);
+    assert.ok(capturedConfig, 'transport config was captured');
+    assert.strictEqual(
+      capturedConfig.requireTLS,
+      true,
+      'requireTLS should be true when smtp_tls=true'
+    );
+    assert.ok(capturedConfig.tls, 'tls should be set when smtp_tls=true');
+    assert.strictEqual(capturedConfig.tls.rejectUnauthorized, true);
+  });
+
+  test('smtp_tls=false does not add requireTLS', async () => {
+    await setSetting(db, 'smtp_tls', encrypt('false'));
+    mod.setTransportFactory(async (config: any) => {
+      capturedConfig = config;
+      return { sendMail: async () => ({ messageId: 'test-id' }) };
+    });
+    const result = await mod.smtp.send({ to: ['a@b.com'], subject: 'Hello' }, db);
+    assert.strictEqual(result.success, true);
+    assert.ok(capturedConfig, 'transport config was captured');
+    assert.strictEqual(
+      capturedConfig.requireTLS,
+      undefined,
+      'requireTLS should be undefined when smtp_tls=false'
+    );
+    assert.strictEqual(
+      capturedConfig.tls,
+      undefined,
+      'tls should be undefined when smtp_tls=false'
+    );
   });
 });

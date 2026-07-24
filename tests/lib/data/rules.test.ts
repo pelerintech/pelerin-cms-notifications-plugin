@@ -189,12 +189,84 @@ test('updateRule on missing id throws code not_found', async () => {
   );
 });
 
+test('updateRule with key-field change to existing quadruple throws code duplicate', async () => {
+  const { db } = await createTestDb();
+  const now = new Date();
+  // Seed two rules with different event_patterns but same template
+  const fixtures = await seedMinimal(db);
+  // Create a third rule with a distinct quadruple (different event_pattern)
+  const ruleC = await createRule(db, {
+    event_pattern: 'cms.user.created',
+    template_id: fixtures.templateId,
+    provider_name: 'sendgrid',
+    to: 'c@d.com',
+  });
+  // Change ruleC's event_pattern to match exactRule's — this creates a
+  // quadruple collision: ('shop.order.created', fixtures.templateId, 'sendgrid', 'email')
+  await assert.rejects(
+    () =>
+      updateRule(db, ruleC.id, {
+        event_pattern: 'shop.order.created',
+      }),
+    (err: any) => err.code === 'duplicate'
+  );
+});
+
 test('deleteRule removes the row', async () => {
   const { db } = await createTestDb();
   const { exactRuleId } = await seedMinimal(db);
   await deleteRule(db, exactRuleId);
   const found = await getRule(db, exactRuleId);
   assert.strictEqual(found, null);
+});
+
+test('deleteRule cascades to notification_logs (deletes orphan log rows)', async () => {
+  const { db } = await createTestDb();
+  const now = new Date();
+  const { notification_logs } = await import('../../../src/db/schema.ts');
+  const { eq } = await import('drizzle-orm');
+  const { exactRuleId } = await seedMinimal(db);
+
+  // Create two log rows for this rule
+  await db.insert(notification_logs).values([
+    {
+      id: crypto.randomUUID(),
+      event_name: 'shop.order.created',
+      rule_id: exactRuleId,
+      provider_name: 'sendgrid',
+      to: 'admin@example.com',
+      subject: 'Order 1',
+      body_html: '<p>test</p>',
+      success: true,
+      created_at: now,
+    },
+    {
+      id: crypto.randomUUID(),
+      event_name: 'shop.order.created',
+      rule_id: exactRuleId,
+      provider_name: 'sendgrid',
+      to: 'admin@example.com',
+      subject: 'Order 2',
+      body_html: '<p>test2</p>',
+      success: false,
+      error: 'Error message',
+      created_at: now,
+    },
+  ]);
+
+  // Delete the rule
+  await deleteRule(db, exactRuleId);
+
+  // Rule should be gone
+  const found = await getRule(db, exactRuleId);
+  assert.strictEqual(found, null);
+
+  // Logs should also be gone
+  const remainingLogs = await db
+    .select()
+    .from(notification_logs)
+    .where(eq(notification_logs.rule_id, exactRuleId));
+  assert.strictEqual(remainingLogs.length, 0, 'logs must be cascade-deleted with the rule');
 });
 
 test('findActiveRulesMatching returns exact + wildcard, exact first', async () => {

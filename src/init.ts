@@ -15,12 +15,12 @@ export default function init(ctx: any): void {
 
   ctx.events.subscribe('*', async (data: any) => {
     try {
-      const event = data.event || data.name;
+      const event = data.event ?? data.name;
       if (!event) {
         console.warn('[notifications] Received event without name');
         return;
       }
-      const payload = data.payload || data;
+      const payload = data.payload ?? {};
       await dispatchEvent(ctx.db, event, payload);
     } catch (err) {
       // Never crash the event bus

@@ -6,14 +6,23 @@
  * constructs the deps from `createPluginContext()` (the integration seam,
  * not unit-tested); the `runMethod` function is unit-tested with a fake `sdk`,
  * a fake `ctx`, and either a seeded harness `db` or a poison-db proxy.
- *
- * `any` types for `sdk` and `ctx` are deliberate: importing the real types from
- * `pelerin:plugin-sdk` or `astro` would reintroduce the virtual-module
- * dependency into the tested code path. Type safety is provided by the
- * handler's own usage; test correctness is verified by behavior, not types.
  */
+import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import type { PluginContext } from 'pelerin:plugin-sdk';
+import type { APIRoute } from 'astro';
+
+/** Dependency bag injected into every handler's runMethod. */
 export interface HandlerDeps {
-  db: any;
-  sdk: any;
-  ctx: any;
+  db: LibSQLDatabase;
+  sdk: PluginContext;
+  ctx: Parameters<APIRoute>[0];
+}
+
+/**
+ * Bridge the CMS SDK's DrizzleDb → LibSQLDatabase types.
+ * The CMS SDK's ambient DrizzleDb is a minimal interface; at runtime it IS a
+ * full LibSQLDatabase instance, but tsc can't prove compatibility structurally.
+ */
+export function toDb(raw: any): LibSQLDatabase {
+  return raw as unknown as LibSQLDatabase;
 }

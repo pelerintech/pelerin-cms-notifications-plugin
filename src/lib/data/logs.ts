@@ -1,4 +1,4 @@
-import { eq, and, like, desc, gte, lte, count } from 'drizzle-orm';
+import { eq, and, desc, gte, lte, count } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { notification_logs } from '../../db/schema.ts';
 

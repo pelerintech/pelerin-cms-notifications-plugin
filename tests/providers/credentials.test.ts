@@ -14,10 +14,21 @@ import { local } from '../../src/providers/local.ts';
 const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
 const originalSendgridEnv = process.env.SENDGRID_API_KEY;
+const originalFromEmails = {
+  sendgrid: process.env.SENDGRID_FROM_EMAIL,
+  mailgun: process.env.MAILGUN_FROM_EMAIL,
+  brevo: process.env.BREVO_FROM_EMAIL,
+  smtp: process.env.SMTP_FROM_EMAIL,
+};
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
   delete process.env.SENDGRID_API_KEY;
+  // Set FROM_EMAIL env vars for credential tests to proceed past the fail-loud check
+  process.env.SENDGRID_FROM_EMAIL = 'sg@test.com';
+  process.env.MAILGUN_FROM_EMAIL = 'mg@test.com';
+  process.env.BREVO_FROM_EMAIL = 'br@test.com';
+  process.env.SMTP_FROM_EMAIL = 'smtp@test.com';
 });
 
 after(() => {
@@ -25,6 +36,14 @@ after(() => {
   else process.env.NOTIFICATIONS_ENCRYPTION_KEY = originalKey;
   if (originalSendgridEnv === undefined) delete process.env.SENDGRID_API_KEY;
   else process.env.SENDGRID_API_KEY = originalSendgridEnv;
+  if (originalFromEmails.sendgrid === undefined) delete process.env.SENDGRID_FROM_EMAIL;
+  else process.env.SENDGRID_FROM_EMAIL = originalFromEmails.sendgrid;
+  if (originalFromEmails.mailgun === undefined) delete process.env.MAILGUN_FROM_EMAIL;
+  else process.env.MAILGUN_FROM_EMAIL = originalFromEmails.mailgun;
+  if (originalFromEmails.brevo === undefined) delete process.env.BREVO_FROM_EMAIL;
+  else process.env.BREVO_FROM_EMAIL = originalFromEmails.brevo;
+  if (originalFromEmails.smtp === undefined) delete process.env.SMTP_FROM_EMAIL;
+  else process.env.SMTP_FROM_EMAIL = originalFromEmails.smtp;
 });
 
 describe('SendGrid provider credentials', () => {
@@ -167,7 +186,7 @@ describe('SMTP provider credentials', () => {
     await setSetting(db, 'smtp_tls', encrypt('true'));
     const result = await smtp.send({ to: ['a@b.com'], subject: 's' }, db);
     assert.strictEqual(result.success, false);
-    assert.match(result.error || '', /SMTP request failed/);
+    assert.match(result.error || '', /SMTP (request failed|send timed out)/);
     assert.doesNotMatch(result.error || '', /configuration incomplete/);
   });
 

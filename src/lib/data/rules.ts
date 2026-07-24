@@ -1,6 +1,6 @@
-import { eq, and, like, desc, sql, count } from 'drizzle-orm';
+import { eq, ne, and, or, like, desc, count } from 'drizzle-orm';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
-import { notification_rules } from '../../db/schema.ts';
+import { notification_rules, notification_logs } from '../../db/schema.ts';
 import { matches } from '../matcher.ts';
 
 /** A notification rule row as returned by accessors. */
@@ -142,6 +142,41 @@ export async function updateRule(
   if (!existing) {
     throw new RuleError('not_found', 'Rule not found');
   }
+
+  // Determine the effective values for the key fields after the update
+  const newEventPattern = input.event_pattern ?? existing.event_pattern;
+  const newTemplateId = input.template_id ?? existing.template_id;
+  const newProviderName = input.provider_name ?? existing.provider_name;
+  const newChannel = input.channel ?? existing.channel;
+
+  // If any key field is being changed, re-check uniqueness
+  if (
+    newEventPattern !== existing.event_pattern ||
+    newTemplateId !== existing.template_id ||
+    newProviderName !== existing.provider_name ||
+    newChannel !== existing.channel
+  ) {
+    const duplicate = await db
+      .select({ id: notification_rules.id })
+      .from(notification_rules)
+      .where(
+        and(
+          eq(notification_rules.event_pattern, newEventPattern),
+          eq(notification_rules.template_id, newTemplateId),
+          eq(notification_rules.provider_name, newProviderName),
+          eq(notification_rules.channel, newChannel),
+          // Exclude the current row being updated
+          ne(notification_rules.id, id)
+        )
+      );
+    if (duplicate.length > 0) {
+      throw new RuleError(
+        'duplicate',
+        'Rule with this event_pattern, template_id, provider_name, and channel already exists'
+      );
+    }
+  }
+
   const updates: Record<string, unknown> = { updated_at: new Date() };
   if (input.event_pattern !== undefined) updates.event_pattern = input.event_pattern;
   if (input.template_id !== undefined) updates.template_id = input.template_id;
@@ -169,17 +204,33 @@ export async function findActiveRulesMatching(
   db: LibSQLDatabase,
   event: string
 ): Promise<RuleRow[]> {
+  // Build LIKE patterns for all prefix segments of the event, plus the global wildcard
+  // e.g., for 'shop.order.created': ['shop.%', 'shop.order.%', '*']
+  const segments = event.split('.');
+  const likePatterns = segments.map((_, i) => segments.slice(0, i + 1).join('.') + '.%');
+  likePatterns.push('*');
+
   const rows = await db
     .select()
     .from(notification_rules)
-    .where(eq(notification_rules.active, true));
+    .where(
+      and(
+        eq(notification_rules.active, true),
+        or(
+          eq(notification_rules.event_pattern, '*'),
+          ...likePatterns.map((p) => like(notification_rules.event_pattern, p))
+        )
+      )
+    );
   const matching = (rows as RuleRow[])
     .filter((rule) => matches(rule.event_pattern, event))
     .sort((a, b) => specificity(b.event_pattern) - specificity(a.event_pattern));
   return matching;
 }
 
-/** Delete a rule by id. */
+/** Delete a rule by id. Cascades to notification_logs (deletes orphan log rows). */
 export async function deleteRule(db: LibSQLDatabase, id: string): Promise<void> {
+  // Delete orphan log rows first, then the rule itself
+  await db.delete(notification_logs).where(eq(notification_logs.rule_id, id));
   await db.delete(notification_rules).where(eq(notification_rules.id, id));
 }

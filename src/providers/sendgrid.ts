@@ -21,6 +21,17 @@ async function getSettingDecrypted(db: LibSQLDatabase, key: string): Promise<str
   return raw ? decryptIfNeeded(raw) : undefined;
 }
 
+/** Default send timeout (30s). Override via setSendTimeoutForTests(). */
+export let SEND_TIMEOUT_MS = 30_000;
+
+/**
+ * Test seam: override the send timeout.
+ * Call in test setup; restore (e.g. back to 30_000) in teardown.
+ */
+export function setSendTimeoutForTests(ms: number): void {
+  SEND_TIMEOUT_MS = ms;
+}
+
 export const sendgridProvider: NotificationProvider = {
   name: 'sendgrid',
   channels: ['email'],
@@ -44,6 +55,11 @@ export const sendgridProvider: NotificationProvider = {
       return { success: false, error: 'SendGrid API key not configured' };
     }
 
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+    if (!fromEmail) {
+      return { success: false, error: 'SendGrid from email not configured' };
+    }
+
     const emailData = {
       personalizations: [
         {
@@ -52,7 +68,7 @@ export const sendgridProvider: NotificationProvider = {
           ...(params.bcc?.length && { bcc: params.bcc.map((email: string) => ({ email })) }),
         },
       ],
-      from: { email: process.env.SENDGRID_FROM_EMAIL || 'notifications@example.com' },
+      from: { email: fromEmail },
       subject: params.subject,
       content: [
         ...(params.bodyHtml ? [{ type: 'text/html', value: params.bodyHtml }] : []),
@@ -72,6 +88,7 @@ export const sendgridProvider: NotificationProvider = {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(emailData),
+        signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -82,6 +99,9 @@ export const sendgridProvider: NotificationProvider = {
       const messageId = response.headers.get('x-message-id');
       return { success: true, messageId: messageId || undefined };
     } catch (err: any) {
+      if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+        return { success: false, error: `SendGrid send timed out after ${SEND_TIMEOUT_MS}ms` };
+      }
       return { success: false, error: `SendGrid request failed: ${err.message}` };
     }
   },

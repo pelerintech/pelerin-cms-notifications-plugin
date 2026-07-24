@@ -11,11 +11,9 @@
  * `SESClient`; tests substitute a fake via `setSesClientFactory()` because
  * `node:test` has no `mock.module` in Node 25. Auto-registers on import.
  *
- * Operational note: new SES accounts are in sandbox mode (send only to verified
- * addresses), and sender identities (the `ses_from_email` Source) must be
- * verified via DKIM/SPF or email confirmation. Production access requires an
- * AWS support request. These surface as SDK errors reported via
- * `{ success: false, error }`.
+ * Send timeout is managed via an AbortController passed as `{ abortSignal }`
+ * to `client.send(cmd, { abortSignal })`. The default timeout is 30s; override
+ * with `setSendTimeoutForTests()`.
  */
 import { registerProvider } from './registry.ts';
 import type {
@@ -36,7 +34,7 @@ async function getSettingDecrypted(db: LibSQLDatabase, key: string): Promise<str
 
 /** Minimal SES client shape — only `send` is used. */
 interface SesClient {
-  send(cmd: unknown): Promise<{ MessageId?: string }>;
+  send(cmd: unknown, options?: { abortSignal?: AbortSignal }): Promise<{ MessageId?: string }>;
 }
 
 /** Factory config — the decrypted SES credentials. */
@@ -73,6 +71,17 @@ export function setSesClientFactory(fn: SesClientFactory): void {
 /** Test seam: restore the default (real) SES client factory. */
 export function resetSesClientFactory(): void {
   sesClientFactory = defaultFactory;
+}
+
+/** Default send timeout (30s). Override via setSendTimeoutForTests(). */
+export let SEND_TIMEOUT_MS = 30_000;
+
+/**
+ * Test seam: override the send timeout.
+ * Call in test setup; restore (e.g. back to 30_000) in teardown.
+ */
+export function setSendTimeoutForTests(ms: number): void {
+  SEND_TIMEOUT_MS = ms;
 }
 
 export const sesProvider: NotificationProvider = {
@@ -147,9 +156,23 @@ export const sesProvider: NotificationProvider = {
           },
         },
       });
-      const result = await client.send(cmd);
+
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+
+      let result: { MessageId?: string };
+      try {
+        result = await client.send(cmd, { abortSignal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
       return { success: true, messageId: result.MessageId };
     } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return { success: false, error: `SES send timed out after ${SEND_TIMEOUT_MS}ms` };
+      }
       return { success: false, error: `SES send failed: ${err.message}` };
     }
   },

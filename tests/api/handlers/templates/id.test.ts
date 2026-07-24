@@ -89,11 +89,17 @@ describe('runDelete (templates/[id]) — auth + 404 + happy', () => {
   test('happy-path: delete → 200 + data.deleted === true', async () => {
     const { db, cleanup } = await createTestDb();
     try {
-      const { templateId } = await seedMinimal(db);
+      // Create a template without any referencing rules (seedMinimal creates rules)
+      const { createTemplate } = await import('../../../../src/lib/data/templates.ts');
+      const tpl = await createTemplate(db, {
+        name: 'Orphan',
+        subject: 'No rules',
+        body_text: 'test',
+      });
       const res = await runDelete({
         db,
         sdk: makeFakeSdk(),
-        ctx: makeCtx({ url: 'http://localhost/api', params: { id: templateId } }),
+        ctx: makeCtx({ url: 'http://localhost/api', params: { id: tpl.id } }),
       });
       assert.equal(res.status, 200);
       const b = await res.json();

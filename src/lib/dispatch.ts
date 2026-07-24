@@ -12,7 +12,6 @@ import { createLog } from './data/logs.ts';
 import { interpolate } from './interpolation.ts';
 import { getProviderForRule } from './provider-selection.ts';
 import '../providers/index.ts'; // trigger auto-registration
-import type { RuleRow } from './data/rules.ts';
 
 /** Split an interpolated recipient field by comma, trim, filter empty. */
 function resolveRecipients(
@@ -113,8 +112,22 @@ export async function dispatchEvent(
         message_id: result.messageId || null,
       });
     } catch (err) {
-      // One bad rule doesn't kill the bus subscriber
+      // One bad rule doesn't kill the bus subscriber.
+      // Log the failure so the audit trail is complete.
       console.error(`[notifications] Error dispatching rule ${rule.id}:`, err);
+      try {
+        await createLog(db, {
+          event_name: event,
+          rule_id: rule.id,
+          provider_name: rule.provider_name,
+          to: '',
+          subject: '',
+          success: false,
+          error: String(err),
+        });
+      } catch {
+        // Don't re-throw if the log write itself fails
+      }
     }
   }
 }

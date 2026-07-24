@@ -7,7 +7,7 @@
  * so they are importable and executable in the real-SQLite test harness
  * outside the Astro build.
  */
-import { sqliteTable, text, integer, customType } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, customType, unique } from 'drizzle-orm/sqlite-core';
 
 /**
  * Date column type: stored as TEXT (ISO 8601 string), converted to/from
@@ -34,21 +34,32 @@ const dateType = customType<{
 
 /**
  * Notification rules — maps event patterns to templates and providers.
- * Unique constraint on (event_pattern, template_id, provider_name).
+ * Unique constraint on (event_pattern, template_id, provider_name, channel).
  */
-export const notification_rules = sqliteTable('notification_rules', {
-  id: text('id').primaryKey(),
-  event_pattern: text('event_pattern').notNull(),
-  template_id: text('template_id').notNull(),
-  provider_name: text('provider_name').notNull(),
-  channel: text('channel').notNull().default('email'),
-  to: text('to').notNull(),
-  cc: text('cc'),
-  bcc: text('bcc'),
-  active: integer('active', { mode: 'boolean' }).notNull(),
-  created_at: dateType('created_at').notNull(),
-  updated_at: dateType('updated_at'),
-});
+export const notification_rules = sqliteTable(
+  'notification_rules',
+  {
+    id: text('id').primaryKey(),
+    event_pattern: text('event_pattern').notNull(),
+    template_id: text('template_id').notNull(),
+    provider_name: text('provider_name').notNull(),
+    channel: text('channel').notNull().default('email'),
+    to: text('to').notNull(),
+    cc: text('cc'),
+    bcc: text('bcc'),
+    active: integer('active', { mode: 'boolean' }).notNull(),
+    created_at: dateType('created_at').notNull(),
+    updated_at: dateType('updated_at'),
+  },
+  (table) => ({
+    uniqueRule: unique().on(
+      table.event_pattern,
+      table.template_id,
+      table.provider_name,
+      table.channel
+    ),
+  })
+);
 
 /**
  * Notification templates — subject and body content with {{ }} interpolation.
@@ -89,7 +100,7 @@ export const notification_logs = sqliteTable('notification_logs', {
  */
 export const notification_settings = sqliteTable('notification_settings', {
   id: text('id').primaryKey(),
-  key: text('key').notNull(),
+  key: text('key').notNull().unique(),
   value: text('value').notNull(),
   created_at: dateType('created_at').notNull(),
 });

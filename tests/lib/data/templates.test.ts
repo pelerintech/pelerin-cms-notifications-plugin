@@ -133,10 +133,25 @@ test('updateTemplate on missing id throws not_found', async () => {
   );
 });
 
-test('deleteTemplate removes the row', async () => {
+test('deleteTemplate removes the row when no rules reference it', async () => {
   const { db } = await createTestDb();
-  const { templateId } = await seedMinimal(db);
-  await deleteTemplate(db, templateId);
-  const found = await getTemplate(db, templateId);
+  // Create a template without any referencing rules
+  const tpl = await createTemplate(db, {
+    name: 'Orphan',
+    subject: 'No rules',
+    body_text: 'test',
+  });
+  await deleteTemplate(db, tpl.id);
+  const found = await getTemplate(db, tpl.id);
   assert.strictEqual(found, null);
+});
+
+test('deleteTemplate with referencing rules throws TemplateError in_use', async () => {
+  const { db } = await createTestDb();
+  // seedMinimal creates rules that reference the template
+  const { templateId } = await seedMinimal(db);
+  await assert.rejects(
+    () => deleteTemplate(db, templateId),
+    (err: any) => err.code === 'in_use'
+  );
 });

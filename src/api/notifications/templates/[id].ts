@@ -12,6 +12,7 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../lib/handler-types';
+import { toDb } from '../../../lib/handler-types';
 import {
   updateTemplate,
   deleteTemplate,
@@ -22,12 +23,12 @@ import { templateSchema } from '../../../schemas/template.schema.ts';
 
 export const PUT: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runPut({ db: sdk.db, sdk, ctx: context });
+  return runPut({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 export const DELETE: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runDelete({ db: sdk.db, sdk, ctx: context });
+  return runDelete({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 function json(body: unknown, status: number): Response {
@@ -75,7 +76,14 @@ export async function runDelete({ db, sdk, ctx }: HandlerDeps): Promise<Response
     if (!existing) {
       return json({ success: false, error: 'Template not found' }, 404);
     }
-    await deleteTemplate(db, id);
+    try {
+      await deleteTemplate(db, id);
+    } catch (err: any) {
+      if (err instanceof TemplateError && err.code === 'in_use') {
+        return json({ success: false, error: err.message }, 409);
+      }
+      throw err;
+    }
     return json({ success: true, data: { id, deleted: true } }, 200);
   } catch (err: any) {
     const status = err.status ?? 500;

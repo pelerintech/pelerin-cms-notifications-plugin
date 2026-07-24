@@ -59,10 +59,10 @@ npm run type-check
 
 ### Required environment variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `NOTIFICATIONS_ENCRYPTION_KEY` | Yes | AES-256-GCM key for encrypting provider credentials at rest |
-| `NOTIFICATIONS_DEV_MODE` | No | Set to `true` to use the local provider (skips network calls) |
+| Variable                       | Required | Description                                                   |
+| ------------------------------ | -------- | ------------------------------------------------------------- |
+| `NOTIFICATIONS_ENCRYPTION_KEY` | Yes      | AES-256-GCM key for encrypting provider credentials at rest   |
+| `NOTIFICATIONS_DEV_MODE`       | No       | Set to `true` to use the local provider (skips network calls) |
 
 ### CI pipeline
 

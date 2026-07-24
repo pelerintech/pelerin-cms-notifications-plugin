@@ -17,19 +17,21 @@
 import type { APIRoute } from 'astro';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import type { HandlerDeps } from '../../../../lib/handler-types';
+import { toDb } from '../../../../lib/handler-types';
 import { encrypt } from '../../../../lib/crypto.ts';
 import { setSetting } from '../../../../lib/data/settings.ts';
 import { getProviderSettings } from '../../../../lib/data/providers.ts';
+import { getProvider } from '../../../../providers/registry.ts';
 import '../../../../providers/index.ts'; // trigger provider auto-registration
 
 export const GET: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runGet({ db: sdk.db, sdk, ctx: context });
+  return runGet({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 export const POST: APIRoute = (context) => {
   const sdk = createPluginContext();
-  return runPost({ db: sdk.db, sdk, ctx: context });
+  return runPost({ db: toDb(sdk.db), sdk, ctx: context });
 };
 
 function json(body: unknown, status: number): Response {
@@ -45,6 +47,11 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     const name = ctx.params.name;
     if (!name) {
       return json({ success: false, error: 'Provider name is required' }, 400);
+    }
+
+    const provider = getProvider(name);
+    if (!provider) {
+      return json({ success: false, error: 'Unknown provider' }, 404);
     }
 
     const data = await getProviderSettings(db, name);
@@ -64,11 +71,20 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
     }
 
     const body = await ctx.request.json();
+
+    const provider = getProvider(name);
+    if (!provider) {
+      return json({ success: false, error: 'Unknown provider' }, 404);
+    }
+
+    const fields = provider.getConfigSchema().fields;
     const saved: Record<string, boolean> = {};
 
     for (const [key, value] of Object.entries(body)) {
       if (!value) continue; // skip empty
-      if (typeof value === 'string' && /^\*{4}/.test(value)) continue; // unchanged mask
+      if (typeof value === 'string' && /^\*{4,}.{0,4}$/.test(value)) continue; // unchanged mask
+      // Skip keys that are not in the provider's config schema
+      if (!fields?.[key]) continue;
       const encrypted = encrypt(String(value));
       await setSetting(db, key, encrypted);
       saved[key] = true;
