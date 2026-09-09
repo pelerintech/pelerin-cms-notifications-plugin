@@ -52,7 +52,7 @@ function providerLabel(name) {
     <h1 class="text-2xl font-bold mb-6">Create New Rule</h1>
 
     {/* Form */}
-    <form id="rule-form" method="POST" action="/api/plugins/notifications/rules">
+    <form id="rule-form">
       {/* Event Pattern */}
       <div class="form-control mb-4">
         <label class="label">
@@ -108,7 +108,7 @@ function providerLabel(name) {
         <label class="label">
           <span class="label-text font-medium">To</span>
           <span class="label-text-alt text-base-content/50"
-            >Email or &#123;&#123; field &#125;&#125;</span
+            >Email or &#123;&#123; field &#125;&#125; — plain substitution only, no blocks/helpers</span
           >
         </label>
         <input
@@ -123,6 +123,9 @@ function providerLabel(name) {
       <div class="form-control mb-4">
         <label class="label">
           <span class="label-text font-medium">CC (optional)</span>
+          <span class="label-text-alt text-base-content/50"
+            >Email or &#123;&#123; field &#125;&#125; — plain substitution only</span
+          >
         </label>
         <input
           type="text"
@@ -135,6 +138,9 @@ function providerLabel(name) {
       <div class="form-control mb-4">
         <label class="label">
           <span class="label-text font-medium">BCC (optional)</span>
+          <span class="label-text-alt text-base-content/50"
+            >Email or &#123;&#123; field &#125;&#125; — plain substitution only</span
+          >
         </label>
         <input
           type="text"
@@ -160,3 +166,25 @@ function providerLabel(name) {
     </form>
   </div>
 </AdminLayout>
+
+<script>
+  document.getElementById('rule-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const body = Object.fromEntries(formData.entries());
+    body.active = body.active === 'on';
+
+    const res = await fetch('/api/plugins/notifications/rules/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      window.location.href = '/admin/plugins/notifications/rules';
+    } else {
+      const err = await res.json();
+      alert(err.error || 'Failed to create rule');
+    }
+  });
+</script>

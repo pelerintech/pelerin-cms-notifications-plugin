@@ -199,6 +199,59 @@ describe('runPost (rules/create) — auth + validation + happy + guardrail + dup
     }
   });
 
+  test('validation-fail: recipient containing a block returns 422 + fields.to', async () => {
+    setDevMode(true);
+    const { db, cleanup } = await createTestDb();
+    try {
+      await seedTemplate(db);
+      const sdk = makeFakeSdk();
+      const ctx = makeCtx({
+        url: 'http://localhost/api/plugins/notifications/rules',
+        body: {
+          event_pattern: 'shop.order.created',
+          template_id: 'tpl-1',
+          provider_name: 'sendgrid',
+          to: '{{#if x}}a@b.com{{/if}}',
+          channel: 'email',
+        },
+      });
+      const res = await runPost({ db, sdk, ctx });
+      assert.equal(res.status, 422, `expected 422, got ${res.status}`);
+      const b = await res.json();
+      assert.equal(b.success, false);
+      assert.ok(b.fields && b.fields.to, 'fields.to should describe the recipient error');
+      const r = await getRule(db, 'any');
+      assert.equal(r, null);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test('happy-path: recipient using plain {{ }} substitution succeeds', async () => {
+    setDevMode(true);
+    const { db, cleanup } = await createTestDb();
+    try {
+      await seedTemplate(db);
+      const sdk = makeFakeSdk();
+      const ctx = makeCtx({
+        url: 'http://localhost/api/plugins/notifications/rules',
+        body: {
+          event_pattern: 'shop.order.created',
+          template_id: 'tpl-1',
+          provider_name: 'sendgrid',
+          to: '{{ data.order.customer_email }}',
+          channel: 'email',
+        },
+      });
+      const res = await runPost({ db, sdk, ctx });
+      assert.equal(res.status, 201, `expected 201, got ${res.status}`);
+      const b = await res.json();
+      assert.equal(b.success, true);
+    } finally {
+      await cleanup();
+    }
+  });
+
   test('duplicate triple → 409 + success:false', async () => {
     setDevMode(true);
     const { db, cleanup } = await createTestDb();

@@ -1,15 +1,27 @@
 import { z } from 'zod';
+import { hasBlockSyntax } from '../lib/render.ts';
 
 /** Simple email validation regex (splits by comma, validates each). */
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** A single recipient comma-part: either a literal email or a plain {{ }} substitution. */
+function validRecipientPart(raw: string): boolean {
+  const s = raw.trim();
+  if (!s) return false;
+  // A dynamic substitution must be plain {{ path }} / {{{ path }}} — no blocks/helpers.
+  if (s.includes('{{')) {
+    return !hasBlockSyntax(s);
+  }
+  return emailRegex.test(s);
+}
+
 function validEmailList(val: string): boolean {
-  return val.split(',').every((s) => emailRegex.test(s.trim()));
+  return val.split(',').every(validRecipientPart);
 }
 
 function validEmailListOrEmpty(val: string | null | undefined): boolean {
   if (!val) return true;
-  return val.split(',').every((s) => emailRegex.test(s.trim()));
+  return val.split(',').every(validRecipientPart);
 }
 
 /**

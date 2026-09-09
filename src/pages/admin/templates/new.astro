@@ -18,7 +18,7 @@ const user = await sdk.auth.requireAdmin(Astro.request);
     <h1 class="text-2xl font-bold mb-6">Create New Template</h1>
 
     {/* Form */}
-    <form id="template-form" method="POST" action="/api/plugins/notifications/templates">
+    <form id="template-form">
       {/* Name */}
       <div class="form-control mb-4">
         <label class="label">
@@ -75,6 +75,58 @@ const user = await sdk.auth.requireAdmin(Astro.request);
           class="textarea textarea-bordered w-full h-32 font-mono text-sm"></textarea>
       </div>
 
+      {/* Syntax + available variables reference */}
+      <details class="collapse collapse-arrow border border-base-300 rounded-box mb-4">
+        <summary class="collapse-title text-sm font-medium"
+          >Template syntax &amp; available variables</summary
+        >
+        <div class="collapse-content text-xs space-y-2">
+          <div>
+            <h4 class="font-semibold">Syntax</h4>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>&#123;&#123; field.path &#125;&#125;</code> — escaped value</li>
+              <li>
+                <code>&#123;&#123;&#123; field.path &#125;&#125;&#125;</code> — raw HTML (unescaped)
+              </li>
+              <li>
+                <code>&#123;&#123;#if condition&#125;&#125;...&#123;&#123;/if&#125;&#125;</code> — conditional
+              </li>
+              <li>
+                <code>&#123;&#123;#each items&#125;&#125;...&#123;&#123;/each&#125;&#125;</code> — loop
+              </li>
+              <li>
+                <code>&#123;&#123; formatMoney amount currency 'code|symbol|none' &#125;&#125;</code
+                > — money helper
+              </li>
+              <li>
+                <code>&#123;&#123; formatDate iso 'dd/MM/yy' &#125;&#125;</code> — date helper
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold">Order event variables</h4>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>data.order.order_number</code> — order number</li>
+              <li><code>data.order.customer_name</code> — customer name</li>
+              <li><code>data.order.total</code> — order total</li>
+              <li>
+                <code>data.shipping_address.address</code> / <code>city</code> / <code>country</code
+                >
+              </li>
+              <li><code>data.billing_address.*</code></li>
+              <li>
+                <code>data.items</code> — array of line items (use with <code
+                  >&#123;&#123;#each&#125;&#125;</code
+                >)
+              </li>
+              <li>
+                <code>data.order.metadata.pickup_location.name</code> — pickup location (if pickup order)
+              </li>
+            </ul>
+          </div>
+        </div>
+      </details>
+
       {/* Actions */}
       <div class="flex gap-2">
         <button type="submit" class="btn btn-primary">Create Template</button>
@@ -83,3 +135,24 @@ const user = await sdk.auth.requireAdmin(Astro.request);
     </form>
   </div>
 </AdminLayout>
+
+<script>
+  document.getElementById('template-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const body = Object.fromEntries(formData.entries());
+
+    const res = await fetch('/api/plugins/notifications/templates/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      window.location.href = '/admin/plugins/notifications/templates';
+    } else {
+      const err = await res.json();
+      alert(err.error || 'Failed to create template');
+    }
+  });
+</script>

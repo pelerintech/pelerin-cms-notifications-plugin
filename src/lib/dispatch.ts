@@ -9,7 +9,7 @@ import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import { findActiveRulesMatching } from './data/rules.ts';
 import { getTemplate } from './data/templates.ts';
 import { createLog } from './data/logs.ts';
-import { interpolate } from './interpolation.ts';
+import { renderTemplate, renderRecipient } from './render.ts';
 import { getProviderForRule } from './provider-selection.ts';
 import '../providers/index.ts'; // trigger auto-registration
 
@@ -19,7 +19,7 @@ function resolveRecipients(
   payload: Record<string, unknown>
 ): string[] {
   if (!recipientField) return [];
-  const resolved = interpolate(recipientField, payload);
+  const resolved = renderRecipient(recipientField, payload);
   return resolved
     .split(',')
     .map((s) => s.trim())
@@ -50,9 +50,9 @@ export async function dispatchEvent(
         continue;
       }
 
-      const subject = interpolate(template.subject, payload);
-      const bodyHtml = template.body_html ? interpolate(template.body_html, payload) : null;
-      const bodyText = template.body_text ? interpolate(template.body_text, payload) : null;
+      const subject = renderTemplate(template.subject, payload);
+      const bodyHtml = template.body_html ? renderTemplate(template.body_html, payload) : null;
+      const bodyText = template.body_text ? renderTemplate(template.body_text, payload) : null;
       const to = resolveRecipients(rule.to, payload);
       const cc = resolveRecipients(rule.cc, payload);
       const bcc = resolveRecipients(rule.bcc, payload);
