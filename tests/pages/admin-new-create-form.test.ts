@@ -73,6 +73,16 @@ describe('admin rules/new — create form saves JSON and redirects', () => {
     const script = clientScript(RULES_NEW);
     assert.ok(/active/.test(script), 'script should handle the active field');
   });
+
+  it('surfaces the validation fields map on error', () => {
+    const script = clientScript(RULES_NEW);
+    assert.match(script, /\.fields/, 'script must surface the returned fields map');
+    assert.match(
+      script,
+      /Object\.entries\(.*fields\)|JSON\.stringify\(.*fields\)/,
+      'script must render fields into the surfaced error message'
+    );
+  });
 });
 
 describe('admin template editor — syntax + available-variables reference', () => {
@@ -117,6 +127,16 @@ describe('admin templates/new — create form saves JSON and redirects', () => {
       formHasNativeAction(TEMPLATES_NEW),
       false,
       'templates/new form must not use a native action attribute'
+    );
+  });
+
+  it('surfaces the validation fields map on error', () => {
+    const script = clientScript(TEMPLATES_NEW);
+    assert.match(script, /\.fields/, 'script must surface the returned fields map');
+    assert.match(
+      script,
+      /Object\.entries\(.*fields\)|JSON\.stringify\(.*fields\)/,
+      'script must render fields into the surfaced error message'
     );
   });
 });

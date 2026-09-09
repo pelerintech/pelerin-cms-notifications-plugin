@@ -184,7 +184,14 @@ function providerLabel(name) {
       window.location.href = '/admin/plugins/notifications/rules';
     } else {
       const err = await res.json();
-      alert(err.error || 'Failed to create rule');
+      const fieldErrors =
+        err && err.fields
+          ? '\n' +
+            Object.entries(err.fields)
+              .map(([k, v]) => `- ${k}: ${v}`)
+              .join('\n')
+          : '';
+      alert((err && err.error) || 'Failed to create rule' + fieldErrors);
     }
   });
 </script>

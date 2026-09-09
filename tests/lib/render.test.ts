@@ -166,6 +166,17 @@ describe('renderTemplate', () => {
     assert.strictEqual(out, '');
   });
 
+  it('unknown helper is a no-op (does not throw)', () => {
+    assert.strictEqual(renderTemplate('{{ noSuchHelper x }}', { x: 'a' }), '');
+  });
+
+  it('unknown helper does not break the rest of the template', () => {
+    assert.strictEqual(
+      renderTemplate('Hello {{ noSuchHelper x }} world', { x: 'a' }),
+      'Hello  world'
+    );
+  });
+
   describe('formatDate', () => {
     it('formats an ISO timestamp with a default format', () => {
       assert.strictEqual(

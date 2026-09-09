@@ -83,6 +83,13 @@ export function resetCompileFn(): void {
 // Register helpers once on the shared Handlebars instance.
 Handlebars.registerHelper('formatMoney', formatMoney);
 Handlebars.registerHelper('formatDate', formatDate);
+// `helperMissing` is Handlebars' fallback for an unregistered helper invoked
+// with arguments (e.g. `{{ noSuchHelper x }}`). Registering it once (a static
+// name, no dynamic registration) makes unknown helpers resolve to empty output
+// instead of throwing a runtime "Missing helper" error, so a typo'd helper in a
+// template renders as empty/missing rather than crashing the dispatch. Known
+// helpers (built-ins + formatMoney/formatDate) never reach this fallback.
+Handlebars.registerHelper('helperMissing', () => '');
 
 const cache = new Map<string, (data: unknown) => string>();
 

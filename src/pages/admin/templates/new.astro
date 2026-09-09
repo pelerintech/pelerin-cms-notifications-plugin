@@ -152,7 +152,14 @@ const user = await sdk.auth.requireAdmin(Astro.request);
       window.location.href = '/admin/plugins/notifications/templates';
     } else {
       const err = await res.json();
-      alert(err.error || 'Failed to create template');
+      const fieldErrors =
+        err && err.fields
+          ? '\n' +
+            Object.entries(err.fields)
+              .map(([k, v]) => `- ${k}: ${v}`)
+              .join('\n')
+          : '';
+      alert((err && err.error) || 'Failed to create template' + fieldErrors);
     }
   });
 </script>

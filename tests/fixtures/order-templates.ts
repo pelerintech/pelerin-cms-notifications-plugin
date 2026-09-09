@@ -32,6 +32,17 @@ export const CONFIRMED_TEMPLATE: TemplateContent = {
       <p>Thank you for your order. Your order <strong>{{ data.order.order_number }}</strong> has been received.</p>
       <p><strong>Total:</strong> {{ formatMoney data.order.total data.order.currency }}</p>
       <p><strong>Date:</strong> {{ formatDate data.order.created_at 'dd/MM/yy' }}</p>
+      {{#if data.items}}
+      <table role="presentation" width="100%" cellpadding="4" cellspacing="0" style="font-family:Arial,sans-serif;font-size:13px;color:#333;">
+        {{#each data.items}}
+        <tr>
+          <td>{{ product_name }} ({{ sku }})</td>
+          <td align="right">{{ quantity }}x</td>
+          <td align="right">{{ formatMoney price_gross currency }}</td>
+        </tr>
+        {{/each}}
+      </table>
+      {{/if}}
       {{#if data.order.metadata.pickup_location}}
       <p><strong>Pickup:</strong> Your order will be ready for pickup at <strong>{{ data.order.metadata.pickup_location.name }}</strong>{{#if data.order.metadata.pickup_location.address}}, {{ data.order.metadata.pickup_location.address }}{{/if}}.</p>
       {{else}}
