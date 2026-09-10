@@ -3,7 +3,10 @@ import assert from 'node:assert';
 import { createTestDb } from '../../db/harness.ts';
 import { setSetting } from '../../../src/lib/data/settings.ts';
 import { encrypt } from '../../../src/lib/crypto.ts';
-import { isProviderConfigured } from '../../../src/lib/data/providers.ts';
+import {
+  isProviderConfigured,
+  listAvailableProvidersForChannel,
+} from '../../../src/lib/data/providers.ts';
 import '../../../src/providers/index.ts'; // trigger auto-registration
 
 const KEY = 'test-encryption-key-32+chars-long';
@@ -51,6 +54,35 @@ describe('isProviderConfigured', () => {
 
   test('local → false (never selectable)', async () => {
     assert.strictEqual(await isProviderConfigured(db, 'local'), false);
+  });
+
+  test('smtp configured with host/port/user/pass even when smtp_tls is absent (TLS optional)', async () => {
+    // Regression: smtp_tls was a required key but it is a boolean toggle, and an
+    // unticked checkbox submits no value, so SMTP was never detected as
+    // configured unless TLS was enabled. TLS must not gate configuration.
+    await setSetting(db, 'smtp_host', encrypt('smtp.example.com'));
+    await setSetting(db, 'smtp_port', encrypt('587'));
+    await setSetting(db, 'smtp_username', encrypt('user@example.com'));
+    await setSetting(db, 'smtp_password', encrypt('pw'));
+    assert.strictEqual(await isProviderConfigured(db, 'smtp'), true);
+  });
+
+  test('smtp is still unconfigured without the required credential keys', async () => {
+    await setSetting(db, 'smtp_host', encrypt('smtp.example.com'));
+    // smtp_port, smtp_username, smtp_password missing
+    assert.strictEqual(await isProviderConfigured(db, 'smtp'), false);
+  });
+
+  test('production rule-editor dropdown includes smtp when only host/port/user/pass set', async () => {
+    await setSetting(db, 'smtp_host', encrypt('smtp.example.com'));
+    await setSetting(db, 'smtp_port', encrypt('587'));
+    await setSetting(db, 'smtp_username', encrypt('user@example.com'));
+    await setSetting(db, 'smtp_password', encrypt('pw'));
+    const available = await listAvailableProvidersForChannel(db, 'email', false);
+    assert.ok(
+      available.some((p) => p.name === 'smtp'),
+      'smtp should be offered without TLS'
+    );
   });
 
   test('unknown provider → false', async () => {

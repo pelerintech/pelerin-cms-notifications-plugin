@@ -103,7 +103,7 @@ export const smtpProvider: NotificationProvider = {
 
   getConfigSchema(): ProviderConfigSchema {
     return {
-      requiredKeys: ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_tls'],
+      requiredKeys: ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password'],
       fields: {
         smtp_host: {
           type: 'text',
