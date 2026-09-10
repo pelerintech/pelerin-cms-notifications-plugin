@@ -6,6 +6,7 @@ import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import { listRules } from '../../../lib/data/rules.ts';
 import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
+import '../../../providers/index.ts'; // trigger provider auto-registration so the provider column populates
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);

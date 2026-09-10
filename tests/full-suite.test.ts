@@ -55,6 +55,7 @@ const TEST_FILES: string[] = [
   'tests/matcher.test.ts',
   'tests/pages/admin-logs-index-script-syntax.test.ts',
   'tests/pages/admin-new-create-form.test.ts',
+  'tests/pages/admin-rule-provider-registry.test.ts',
   'tests/pages/admin-providers-name-script-syntax.test.ts',
   'tests/pages/admin-rules-id-script-syntax.test.ts',
   'tests/pages/admin-rules-index-script-syntax.test.ts',

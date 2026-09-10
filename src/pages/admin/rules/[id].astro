@@ -7,6 +7,7 @@ import { createPluginContext } from 'pelerin:plugin-sdk';
 import { listTemplates } from '../../../lib/data/templates.ts';
 import { getRule } from '../../../lib/data/rules.ts';
 import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
+import '../../../providers/index.ts'; // trigger provider auto-registration so the dropdown populates
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
