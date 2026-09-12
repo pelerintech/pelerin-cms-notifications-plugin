@@ -95,7 +95,7 @@ test('getTemplate returns the template for an existing id', async () => {
   const { templateId } = await seedMinimal(db);
   const tpl = await getTemplate(db, templateId);
   assert.ok(tpl);
-  assert.strictEqual(tpl.subject, 'Order {{ order_id }}');
+  assert.strictEqual(tpl.subject, 'Order {{ data.order.order_number }}');
 });
 
 test('getTemplate returns null for a missing id', async () => {

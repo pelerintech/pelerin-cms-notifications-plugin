@@ -19,6 +19,7 @@ import { getTemplate } from '../../../lib/data/templates.ts';
 import { isProviderConfigured } from '../../../lib/data/providers.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration for isProviderConfigured
 import { ruleSchema } from '../../../schemas/rule.schema.ts';
+import { isDevMode } from '../../../lib/dev-mode.ts';
 
 export const POST: APIRoute = (context) => {
   const sdk = createPluginContext();
@@ -61,7 +62,7 @@ export async function runPost({ db, sdk, ctx }: HandlerDeps): Promise<Response> 
     // fully configured. In dev mode the check is skipped so manual smoke testing
     // works with zero external credentials. `local` is rejected here too because
     // isProviderConfigured('local') returns false.
-    if (process.env.NOTIFICATIONS_DEV_MODE !== 'true') {
+    if (!isDevMode()) {
       const configured = await isProviderConfigured(db, result.data.provider_name);
       if (!configured) {
         return json(

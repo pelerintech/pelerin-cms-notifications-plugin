@@ -30,8 +30,9 @@ test('dev mode: dispatchEvent uses local provider and writes a full log row', as
   const { exactRuleId } = await seedMinimal(db);
 
   await dispatchEvent(db, 'shop.order.created', {
-    order_id: '42',
-    customer_email: 'buyer@example.com',
+    event: 'shop.order.created',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: { order: { order_number: '42', customer_email: 'buyer@example.com' } },
   });
 
   const logs = await db.select().from(notification_logs);

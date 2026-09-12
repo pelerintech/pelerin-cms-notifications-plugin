@@ -6,12 +6,51 @@
  * `dispatchEvent(ctx.db, event, payload)`.
  */
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
+import { z } from 'zod';
 import { findActiveRulesMatching } from './data/rules.ts';
 import { getTemplate } from './data/templates.ts';
 import { createLog } from './data/logs.ts';
 import { renderTemplate, renderRecipient } from './render.ts';
 import { getProviderForRule } from './provider-selection.ts';
+import { isDevMode } from './dev-mode.ts';
 import '../providers/index.ts'; // trigger auto-registration
+
+/**
+ * The self-contained payload the bus delivers to subscribers.
+ *
+ * `event` is ALSO passed as the handler's first arg; `timestamp` is stamped by
+ * the bus; `data` is the stable home for event-specific info. Validating this
+ * shape before rendering makes publisher drift fail loudly (a `success:false`
+ * log row with a descriptive `error`) instead of silently rendering empty.
+ */
+const EventEnvelopeSchema = z.object({
+  event: z.string(),
+  timestamp: z.string(),
+  data: z.record(z.unknown()),
+});
+
+/** Event-family prefixes whose `data` carries a meaningful nested object. */
+const ORDER_PREFIX = 'shop.order.';
+const USER_PREFIX = 'pelerin-cms.user.';
+
+/**
+ * Deep-validate the `data` for a known event family. Order events require
+ * `data.order`; CMS auth events require `data.user`. Families not in this map
+ * are envelope-validated only (deep validation is opt-in per family, so a new
+ * event family that isn't deep-validated is never over-rejected).
+ */
+function validateFamilyData(event: string, data: unknown): string | null {
+  if (event.startsWith(ORDER_PREFIX)) {
+    if (!data || typeof data !== 'object' || !('order' in (data as Record<string, unknown>))) {
+      return `Invalid payload for "${event}": expected data.order`;
+    }
+  } else if (event.startsWith(USER_PREFIX)) {
+    if (!data || typeof data !== 'object' || !('user' in (data as Record<string, unknown>))) {
+      return `Invalid payload for "${event}": expected data.user`;
+    }
+  }
+  return null;
+}
 
 /** Split an interpolated recipient field by comma, trim, filter empty. */
 function resolveRecipients(
@@ -26,13 +65,61 @@ function resolveRecipients(
     .filter(Boolean);
 }
 
+/**
+ * Log a `success:false` row for each matching rule when the payload is
+ * rejected (invalid envelope, or a known family's `data` is malformed).
+ */
+async function logRejectedPayload(
+  db: LibSQLDatabase,
+  rules: ReturnType<typeof findActiveRulesMatching> extends Promise<infer T> ? T : never,
+  event: string,
+  error: string
+): Promise<void> {
+  for (const rule of rules) {
+    await createLog(db, {
+      event_name: event,
+      rule_id: rule.id,
+      provider_name: rule.provider_name,
+      to: '',
+      subject: '',
+      success: false,
+      error,
+    });
+  }
+}
+
 /** Dispatch an event: find matching rules, resolve templates, send via provider, log the result. */
 export async function dispatchEvent(
   db: LibSQLDatabase,
   event: string,
-  payload: Record<string, unknown>
+  payload: unknown
 ): Promise<void> {
   const rules = await findActiveRulesMatching(db, event);
+
+  // Validate the delivered envelope before rendering. A malformed / unexpected
+  // shape fails loudly (a success:false row with a descriptive error) rather
+  // than silently rendering empty.
+  const envelopeResult = EventEnvelopeSchema.safeParse(payload);
+  if (!envelopeResult.success) {
+    await logRejectedPayload(
+      db,
+      rules,
+      event,
+      `Invalid event envelope for "${event}": ${envelopeResult.error.message}`
+    );
+    return;
+  }
+
+  const envelope = envelopeResult.data;
+  const familyError = validateFamilyData(event, envelope.data);
+  if (familyError) {
+    await logRejectedPayload(db, rules, event, familyError);
+    return;
+  }
+
+  // Render against the envelope so existing order templates keep using
+  // `{{data.order.*}}` — no `data.payload` re-wrapping.
+  const context = envelope as unknown as Record<string, unknown>;
 
   for (const rule of rules) {
     try {
@@ -50,12 +137,12 @@ export async function dispatchEvent(
         continue;
       }
 
-      const subject = renderTemplate(template.subject, payload);
-      const bodyHtml = template.body_html ? renderTemplate(template.body_html, payload) : null;
-      const bodyText = template.body_text ? renderTemplate(template.body_text, payload) : null;
-      const to = resolveRecipients(rule.to, payload);
-      const cc = resolveRecipients(rule.cc, payload);
-      const bcc = resolveRecipients(rule.bcc, payload);
+      const subject = renderTemplate(template.subject, context);
+      const bodyHtml = template.body_html ? renderTemplate(template.body_html, context) : null;
+      const bodyText = template.body_text ? renderTemplate(template.body_text, context) : null;
+      const to = resolveRecipients(rule.to, context);
+      const cc = resolveRecipients(rule.cc, context);
+      const bcc = resolveRecipients(rule.bcc, context);
 
       if (to.length === 0) {
         await createLog(db, {
@@ -70,7 +157,7 @@ export async function dispatchEvent(
         continue;
       }
 
-      const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
+      const isDev = isDevMode();
       const provider = getProviderForRule(rule, isDev);
       if (!provider) {
         await createLog(db, {

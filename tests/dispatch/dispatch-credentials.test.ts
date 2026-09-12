@@ -71,9 +71,11 @@ describe('dispatch credential pass-through (behavioral)', () => {
   test('prod mode: sendgrid rule with encrypted creds → real send, success log', async () => {
     await seedMinimal(db);
     await setSetting(db, 'sendgrid_api_key', encrypt('SG.real-key'));
+
     await dispatchEvent(db, 'shop.order.created', {
-      order_id: '42',
-      customer_email: 'buyer@example.com',
+      event: 'shop.order.created',
+      timestamp: '2026-07-24T10:00:00.000Z',
+      data: { order: { order_number: '42', customer_email: 'buyer@example.com' } },
     });
     assert.ok(captured, 'fetch was called');
     assert.strictEqual(captured!.init.headers['Authorization'], 'Bearer SG.real-key');
@@ -87,9 +89,11 @@ describe('dispatch credential pass-through (behavioral)', () => {
 
   test('prod mode: no creds anywhere → failure log, fetch NOT called', async () => {
     await seedMinimal(db);
+
     await dispatchEvent(db, 'shop.order.created', {
-      order_id: '42',
-      customer_email: 'buyer@example.com',
+      event: 'shop.order.created',
+      timestamp: '2026-07-24T10:00:00.000Z',
+      data: { order: { order_number: '42', customer_email: 'buyer@example.com' } },
     });
     assert.strictEqual(fetchMock.mock.callCount(), 0);
     const logs = await db.select().from(notification_logs);
@@ -102,9 +106,11 @@ describe('dispatch credential pass-through (behavioral)', () => {
   test('dev mode ON → local provider, message_id local-, fetch NOT called, provider_name preserved', async () => {
     process.env.NOTIFICATIONS_DEV_MODE = 'true';
     await seedMinimal(db);
+
     await dispatchEvent(db, 'shop.order.created', {
-      order_id: '42',
-      customer_email: 'buyer@example.com',
+      event: 'shop.order.created',
+      timestamp: '2026-07-24T10:00:00.000Z',
+      data: { order: { order_number: '42', customer_email: 'buyer@example.com' } },
     });
     assert.strictEqual(fetchMock.mock.callCount(), 0);
     const logs = await db.select().from(notification_logs);

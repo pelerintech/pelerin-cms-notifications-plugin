@@ -32,8 +32,8 @@ async function seedSes(db: any, opts: { withCreds: boolean }) {
   await insertFixture(db, 'notification_templates', {
     id: 't-ses',
     name: 'Order SES',
-    subject: 'Order {{ order_id }}',
-    body_html: '<p>{{ customer_email }}</p>',
+    subject: 'Order {{ data.order.order_number }}',
+    body_html: '<p>{{ data.order.customer_email }}</p>',
     body_text: null,
     created_at: now,
   });
@@ -42,7 +42,7 @@ async function seedSes(db: any, opts: { withCreds: boolean }) {
     event_pattern: 'shop.order.created',
     template_id: 't-ses',
     provider_name: 'ses',
-    to: '{{ customer_email }}',
+    to: '{{ data.order.customer_email }}',
     cc: null,
     bcc: null,
     active: true,
@@ -65,8 +65,9 @@ describe('dispatch e2e with SES (prod mode)', () => {
     setSesClientFactory(() => ({ send: async () => ({ MessageId: 'ses-dispatch-1' }) }));
 
     await dispatchEvent(db, 'shop.order.created', {
-      order_id: '9',
-      customer_email: 'buyer@example.com',
+      event: 'shop.order.created',
+      timestamp: '2026-07-24T10:00:00.000Z',
+      data: { order: { order_number: '9', customer_email: 'buyer@example.com' } },
     });
 
     const logs = await db.select().from(notification_logs);
@@ -91,8 +92,9 @@ describe('dispatch e2e with SES (prod mode)', () => {
     });
 
     await dispatchEvent(db, 'shop.order.created', {
-      order_id: '9',
-      customer_email: 'buyer@example.com',
+      event: 'shop.order.created',
+      timestamp: '2026-07-24T10:00:00.000Z',
+      data: { order: { order_number: '9', customer_email: 'buyer@example.com' } },
     });
 
     const logs = await db.select().from(notification_logs);
@@ -116,8 +118,9 @@ describe('dispatch e2e with SES (prod mode)', () => {
     });
 
     await dispatchEvent(db, 'shop.order.created', {
-      order_id: '9',
-      customer_email: 'buyer@example.com',
+      event: 'shop.order.created',
+      timestamp: '2026-07-24T10:00:00.000Z',
+      data: { order: { order_number: '9', customer_email: 'buyer@example.com' } },
     });
 
     const logs = await db.select().from(notification_logs);

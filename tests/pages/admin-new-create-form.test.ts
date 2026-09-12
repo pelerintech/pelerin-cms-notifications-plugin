@@ -83,6 +83,24 @@ describe('admin rules/new — create form saves JSON and redirects', () => {
       'script must render fields into the surfaced error message'
     );
   });
+
+  it('does not swallow the fields map via operator precedence', () => {
+    const script = clientScript(RULES_NEW);
+    // fieldErrors must be appended to a parenthesized error expression, not to the
+    // `|| 'Fallback' + fieldErrors` string — the `+`-binds-tighter-than-`||` bug
+    // evaluates that as `'Fallback' + fieldErrors` and discards the field list
+    // whenever `err.error` is truthy.
+    assert.match(
+      script,
+      /\)\s*\+\s*fieldErrors/,
+      'fieldErrors must be appended after a closing parenthesized error expression'
+    );
+    assert.doesNotMatch(
+      script,
+      /\|\|\s*['"][^'"]*['"]\s*\+\s*fieldErrors/,
+      'the fallback string must not swallow fieldErrors via operator precedence'
+    );
+  });
 });
 
 describe('admin template editor — syntax + available-variables reference', () => {
@@ -137,6 +155,20 @@ describe('admin templates/new — create form saves JSON and redirects', () => {
       script,
       /Object\.entries\(.*fields\)|JSON\.stringify\(.*fields\)/,
       'script must render fields into the surfaced error message'
+    );
+  });
+
+  it('does not swallow the fields map via operator precedence', () => {
+    const script = clientScript(TEMPLATES_NEW);
+    assert.match(
+      script,
+      /\)\s*\+\s*fieldErrors/,
+      'fieldErrors must be appended after a closing parenthesized error expression'
+    );
+    assert.doesNotMatch(
+      script,
+      /\|\|\s*['"][^'"]*['"]\s*\+\s*fieldErrors/,
+      'the fallback string must not swallow fieldErrors via operator precedence'
     );
   });
 });

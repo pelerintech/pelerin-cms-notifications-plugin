@@ -84,13 +84,15 @@ Shared test infrastructure (ported verbatim from `../ecomm_plugin/`): `tests/api
 
 **Flow:**
 
-1. `findActiveRulesMatching(db, event)` — query active rules, filter by `matches(pattern, event)`, sort by specificity (exact > `prefix.*` > `*`)
-2. `getTemplate(db, rule.template_id)` — load the rule's template; if missing, `createLog` failure and continue
-3. `interpolate(template.subject, payload)` and body — render `{{ }}` placeholders
-4. `resolveRecipients(rule.to, payload)` — interpolate, split by comma, trim, filter empty; same for cc/bcc
-5. `getProviderForRule(rule, isDev)` — dev mode (`NOTIFICATIONS_DEV_MODE=true`) routes to the local provider; the rule's `provider_name` is preserved in the log regardless
-6. `provider.send({ to, cc, bcc, subject, bodyHtml, bodyText }, db)` — send via the resolved provider; `db` is passed as the second argument so the provider can read its decrypted credentials from the `notification_settings` table at send time
-7. `createLog(db, { ...result })` — write a `notification_logs` row with success/failure, full content, and message_id
+0. **`init.ts` subscribes as `(event, payload)`** — the bus delivers the event name as the handler's first arg and a self-contained `EventEnvelope` (`{ event, timestamp, data }`) as the second. `init.ts` forwards both straight to `dispatchEvent(ctx.db, event, payload)`; it does **not** reverse-engineer the event name from the payload (`data.event ?? data.name`) or re-wrap the payload (`data.payload ?? {}`) — both were wrong for the ecomm (order/invoice) and `pelerin_cms` (auth) publishers.
+1. **Before rendering, `dispatch.ts` validates the `EventEnvelope`** with a zod schema and deep-validates known families via a prefix map (`shop.order.*` requires `data.order`; `pelerin-cms.user.*` requires `data.user`; unknown families are envelope-validated only). A malformed / non-object payload or a known-family mismatch fails loudly — a `success:false` log row with a descriptive `Invalid event envelope` / `expected data.order` error, no send. Templates render against the envelope, so order templates keep using `{{data.order.*}}`.
+2. `findActiveRulesMatching(db, event)` — query active rules, filter by `matches(pattern, event)`, sort by specificity (exact > `prefix.*` > `*`)
+3. `getTemplate(db, rule.template_id)` — load the rule's template; if missing, `createLog` failure and continue
+4. `interpolate(template.subject, payload)` and body — render `{{ }}` placeholders
+5. `resolveRecipients(rule.to, payload)` — interpolate, split by comma, trim, filter empty; same for cc/bcc
+6. `getProviderForRule(rule, isDev)` — dev mode (`NOTIFICATIONS_DEV_MODE=true`) routes to the local provider; the rule's `provider_name` is preserved in the log regardless
+7. `provider.send({ to, cc, bcc, subject, bodyHtml, bodyText }, db)` — send via the resolved provider; `db` is passed as the second argument so the provider can read its decrypted credentials from the `notification_settings` table at send time
+8. `createLog(db, { ...result })` — write a `notification_logs` row with success/failure, full content, and message_id
 
 One bad rule does not kill the bus subscriber — each rule is wrapped in try/catch.
 

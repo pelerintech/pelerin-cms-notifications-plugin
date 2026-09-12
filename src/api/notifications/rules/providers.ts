@@ -20,6 +20,7 @@ import type { HandlerDeps } from '../../../lib/handler-types';
 import { toDb } from '../../../lib/handler-types';
 import '../../../providers/index.ts'; // trigger provider auto-registration
 import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
+import { isDevMode } from '../../../lib/dev-mode.ts';
 
 export const GET: APIRoute = (context) => {
   const sdk = createPluginContext();
@@ -38,7 +39,7 @@ export async function runGet({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     await sdk.auth.requireAdmin(ctx.request);
     const url = new URL(ctx.request.url);
     const channel = url.searchParams.get('channel') || 'email';
-    const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
+    const isDev = isDevMode();
 
     const entries = await listAvailableProvidersForChannel(db, channel, isDev);
     return json({ success: true, data: entries }, 200);

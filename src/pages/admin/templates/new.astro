@@ -124,6 +124,14 @@ const user = await sdk.auth.requireAdmin(Astro.request);
               </li>
             </ul>
           </div>
+          <div>
+            <h4 class="font-semibold">Auth (CMS user) event variables</h4>
+            <ul class="list-disc pl-5 space-y-1">
+              <li><code>data.user.email</code> — user email</li>
+              <li><code>data.user.name</code> — user display name</li>
+              <li><code>data.url</code> — verification / password-reset link</li>
+            </ul>
+          </div>
         </div>
       </details>
 
@@ -159,7 +167,7 @@ const user = await sdk.auth.requireAdmin(Astro.request);
               .map(([k, v]) => `- ${k}: ${v}`)
               .join('\n')
           : '';
-      alert((err && err.error) || 'Failed to create template' + fieldErrors);
+      alert((err && (err.error || 'Failed to create template')) + fieldErrors);
     }
   });
 </script>

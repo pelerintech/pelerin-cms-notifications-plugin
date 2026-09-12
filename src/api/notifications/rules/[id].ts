@@ -18,6 +18,7 @@ import { getTemplate } from '../../../lib/data/templates.ts';
 import { isProviderConfigured } from '../../../lib/data/providers.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration for isProviderConfigured
 import { ruleSchema } from '../../../schemas/rule.schema.ts';
+import { isDevMode } from '../../../lib/dev-mode.ts';
 
 export const PUT: APIRoute = (context) => {
   const sdk = createPluginContext();
@@ -63,7 +64,7 @@ export async function runPut({ db, sdk, ctx }: HandlerDeps): Promise<Response> {
     // that is not fully configured. Skipped in dev mode and when provider_name
     // is not being changed. `local` is rejected because isProviderConfigured('local')
     // returns false.
-    if (result.data.provider_name !== undefined && process.env.NOTIFICATIONS_DEV_MODE !== 'true') {
+    if (result.data.provider_name !== undefined && !isDevMode()) {
       const configured = await isProviderConfigured(db, result.data.provider_name);
       if (!configured) {
         return json(

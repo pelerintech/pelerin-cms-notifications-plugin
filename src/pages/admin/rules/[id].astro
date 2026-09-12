@@ -7,6 +7,7 @@ import { createPluginContext } from 'pelerin:plugin-sdk';
 import { listTemplates } from '../../../lib/data/templates.ts';
 import { getRule } from '../../../lib/data/rules.ts';
 import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
+import { isDevMode } from '../../../lib/dev-mode.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration so the dropdown populates
 
 const sdk = createPluginContext();
@@ -36,7 +37,7 @@ try {
 // Available providers (registry-derived, channel+configured-filtered,
 // local-excluded, mode-aware) via the shared accessor. Replaces the former
 // hardcoded `availableProviders` array and the broken endpoint import.
-const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
+const isDev = isDevMode();
 let availableProviders = [];
 try {
   const channel = rule?.channel || 'email';
@@ -208,7 +209,14 @@ function providerLabel(name) {
       window.location.href = `/admin/plugins/notifications/rules?page=${new URLSearchParams(window.location.search).get('page') || '1'}`;
     } else {
       const err = await res.json();
-      alert(err.error || 'Failed to save rule');
+      const fieldErrors =
+        err && err.fields
+          ? '\n' +
+            Object.entries(err.fields)
+              .map(([k, v]) => `- ${k}: ${v}`)
+              .join('\n')
+          : '';
+      alert((err && (err.error || 'Failed to save rule')) + fieldErrors);
     }
   });
 

@@ -34,6 +34,9 @@ const TEST_FILES: string[] = [
   'tests/dispatch/dispatch-credentials.test.ts',
   'tests/dispatch/dispatch-ses.test.ts',
   'tests/dispatch/dispatch.test.ts',
+  'tests/dispatch/envelope-render.test.ts',
+  'tests/dispatch/envelope-validation.test.ts',
+  'tests/dispatch/auth-invoice.test.ts',
   'tests/dispatch/init-payload.test.ts',
   'tests/dispatch/init.test.ts',
   'tests/infra/handler-types.test.ts',
@@ -41,6 +44,7 @@ const TEST_FILES: string[] = [
   'tests/infra/loader.test.ts',
   'tests/infra/matrix.test.ts',
   'tests/lib/crypto.test.ts',
+  'tests/lib/dev-mode.test.ts',
   'tests/lib/data/index.test.ts',
   'tests/lib/render.test.ts',
   'tests/lib/render-recipient.test.ts',
@@ -56,10 +60,13 @@ const TEST_FILES: string[] = [
   'tests/pages/admin-logs-index-script-syntax.test.ts',
   'tests/pages/admin-new-create-form.test.ts',
   'tests/pages/admin-rule-provider-registry.test.ts',
+  'tests/pages/admin-template-guide-auth.test.ts',
   'tests/pages/admin-providers-name-script-syntax.test.ts',
   'tests/pages/admin-rules-id-script-syntax.test.ts',
+  'tests/pages/admin-rules-id-validation.test.ts',
   'tests/pages/admin-rules-index-script-syntax.test.ts',
   'tests/pages/admin-templates-id-script-syntax.test.ts',
+  'tests/pages/admin-templates-id-validation.test.ts',
   'tests/pages/admin-templates-index-script-syntax.test.ts',
   'tests/providers/all.test.ts',
   'tests/providers/brevo.test.ts',
@@ -116,7 +123,7 @@ test('full test suite passes (node --test <all test files>)', () => {
   const m = testsLine.match(/(\d+)/);
   const testCount = m ? parseInt(m[1], 10) : 0;
   assert.ok(
-    testCount >= 250,
-    `child node --test registered only ${testCount} tests — expected >=250; possible silent skip. Output tail:\n${output.slice(-1500)}`
+    testCount >= 380,
+    `child node --test registered only ${testCount} tests — expected >=380; possible silent skip. Output tail:\n${output.slice(-1500)}`
   );
 });

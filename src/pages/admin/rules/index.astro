@@ -6,6 +6,7 @@ import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
 import { listRules } from '../../../lib/data/rules.ts';
 import { listAvailableProvidersForChannel } from '../../../lib/data/providers.ts';
+import { isDevMode } from '../../../lib/dev-mode.ts';
 import '../../../providers/index.ts'; // trigger provider auto-registration so the provider column populates
 
 const sdk = createPluginContext();
@@ -40,7 +41,7 @@ try {
 // the badge definition matches the dropdown/guardrail. In dev mode all real
 // providers are returned; a rule whose provider is not in the returned set
 // (unconfigured in prod, or unknown) gets the warning badge.
-const isDev = process.env.NOTIFICATIONS_DEV_MODE === 'true';
+const isDev = isDevMode();
 const configuredProviders = new Set();
 try {
   const providers = await listAvailableProvidersForChannel(sdk.db, 'email', isDev);

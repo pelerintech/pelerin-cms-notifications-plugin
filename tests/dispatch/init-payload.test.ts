@@ -1,10 +1,14 @@
 /**
- * Test that init.ts correctly extracts event name and payload from the event bus envelope.
+ * Test that init.ts consumes the bus as `(event, payload)` and forwards the
+ * delivered event name + envelope directly to `dispatchEvent` — it must NOT
+ * reverse-engineer the event name from the payload (`data.event ?? data.name`)
+ * nor re-wrap the payload (`data.payload ?? {}`).
  *
  * Verifies:
- * - When data has payload, dispatchEvent receives the payload
- * - When data has NO payload, dispatchEvent receives {} (not the envelope)
- * - When data has no event or name, dispatchEvent is not called
+ * - The injected stub `subscribe` invokes `handler(event, payload)` (two args).
+ * - `dispatchEvent` receives the bus event name and the envelope, so
+ *   `{{data.order.*}}` renders against the envelope (not `{}`).
+ * - A missing event name logs a warning and does not dispatch.
  */
 import { test } from 'node:test';
 import assert from 'node:assert';
@@ -13,31 +17,29 @@ import { createTestDb } from '../db/harness.ts';
 // Turn on dev mode so dispatch works without external credentials
 process.env.NOTIFICATIONS_DEV_MODE = 'true';
 
-test('init.ts: payload is extracted with ?? (not || leaking envelope)', async () => {
+test('init.ts: subscribes as (event, payload) and forwards the envelope untouched', async () => {
   const { db, cleanup } = await createTestDb();
 
-  // Create a template where subject references {{ event }} — a field
-  // present in the event bus envelope that MUST NOT leak into the template context
   const { createTemplate } = await import('../../src/lib/data/templates.ts');
   const { createRule } = await import('../../src/lib/data/rules.ts');
 
   const tpl = await createTemplate(db, {
-    name: 'LeakDetector',
-    subject: 'Event: {{ event }}',
-    body_text: 'OK',
+    name: 'Order',
+    subject: 'Order {{ data.order.order_number }}',
+    body_text: 'OK {{ data.order.order_number }}',
   });
   const rule = await createRule(db, {
-    event_pattern: 'shop.order.created',
+    event_pattern: 'shop.order.confirmed',
     template_id: tpl.id,
     provider_name: 'sendgrid',
-    to: 'admin@example.com',
+    to: '{{ data.order.customer_email }}',
   });
 
-  let subscribedHandler: ((data: any) => Promise<void>) | null = null;
+  let subscribedHandler: ((event: any, payload: any) => Promise<void>) | null = null;
   const fakeCtx = {
     db,
     events: {
-      subscribe(_pattern: string, handler: (data: any) => Promise<void>) {
+      subscribe(_pattern: string, handler: (event: any, payload: any) => Promise<void>) {
         subscribedHandler = handler;
       },
     },
@@ -49,54 +51,36 @@ test('init.ts: payload is extracted with ?? (not || leaking envelope)', async ()
 
   const { notification_logs } = await import('../../src/db/schema.ts');
 
-  // Test 1: event with payload — {{ event }} should come from payload, not envelope
-  await subscribedHandler!({
-    event: 'shop.order.created',
-    payload: { event: 'from-payload' },
-  });
-  let logs = await db.select().from(notification_logs);
-  const log1 = logs.find((l: any) => l.rule_id === rule.id);
-  assert.ok(log1, 'expected log row for the rule');
-  assert.strictEqual(
-    log1.subject,
-    'Event: from-payload',
-    '{{ event }} should resolve from payload'
-  );
-  assert.strictEqual(log1.success, true);
-
-  // Reset logs for test 2
-  await db.delete(notification_logs);
-
-  // Test 2: event WITHOUT payload — must NOT leak envelope fields.
-  // The old code: `data.payload || data` — when no payload, the whole envelope
-  // { event: 'shop.order.created' } becomes the payload, so {{ event }} resolves
-  // to 'shop.order.created'. With `?? {}`, empty object → {{ event }} resolves to ''.
-  await subscribedHandler!({
-    event: 'shop.order.created',
-    // No payload property — the leak would pass the envelope as payload
+  // Bus delivers (event, envelope) with a two-arg handler invocation.
+  await subscribedHandler!('shop.order.confirmed', {
+    event: 'shop.order.confirmed',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: { order: { order_number: '42', customer_email: 'buyer@example.com' } },
   });
 
-  logs = await db.select().from(notification_logs);
-  const log2 = logs.find((l: any) => l.rule_id === rule.id);
-  assert.ok(log2, 'expected log row for event without payload');
-  assert.strictEqual(log2.success, true, 'should still succeed with empty payload');
+  const logs = await db.select().from(notification_logs);
+  const log = logs.find((l: any) => l.rule_id === rule.id);
+  assert.ok(log, 'expected a log row for the rule');
+  assert.strictEqual(log.event_name, 'shop.order.confirmed', 'event name comes from the bus arg');
   assert.strictEqual(
-    log2.subject,
-    'Event: ',
-    '{{ event }} must NOT leak from envelope — should be empty with no payload'
+    log.subject,
+    'Order 42',
+    '{{data.order.order_number}} renders from the envelope'
   );
+  assert.strictEqual(log.to, 'buyer@example.com', 'recipients render from the envelope');
+  assert.strictEqual(log.success, true);
 
   await cleanup();
 });
 
-test('init.ts: event is extracted via ?? (prefers event over name)', async () => {
+test('init.ts: a missing event name logs a warning and does not dispatch', async () => {
   const { db, cleanup } = await createTestDb();
 
-  let subscribedHandler: ((data: any) => Promise<void>) | null = null;
+  let subscribedHandler: ((event: any, payload: any) => Promise<void>) | null = null;
   const fakeCtx = {
     db,
     events: {
-      subscribe(_pattern: string, handler: (data: any) => Promise<void>) {
+      subscribe(_pattern: string, handler: (event: any, payload: any) => Promise<void>) {
         subscribedHandler = handler;
       },
     },
@@ -104,12 +88,24 @@ test('init.ts: event is extracted via ?? (prefers event over name)', async () =>
 
   const initModule = await import('../../src/init.ts');
   initModule.default(fakeCtx);
+  assert.ok(subscribedHandler !== null, 'init must subscribe to *');
 
-  // Emit with name only (no event) — should work without crash
-  await subscribedHandler!({
-    name: 'shop.order.created',
-    payload: {},
-  });
+  const warnings: string[] = [];
+  const originalWarn = console.warn;
+  console.warn = (msg: string) => warnings.push(msg);
+  try {
+    await subscribedHandler!(undefined, { event: 'x', timestamp: 't', data: {} });
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  const { notification_logs } = await import('../../src/db/schema.ts');
+  const logs = await db.select().from(notification_logs);
+  assert.strictEqual(logs.length, 0, 'no dispatch when event name is missing');
+  assert.ok(
+    warnings.some((m) => m.includes('without name')),
+    'expected a warning about a missing event name'
+  );
 
   await cleanup();
 });

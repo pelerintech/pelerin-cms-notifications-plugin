@@ -11,8 +11,11 @@ test('dispatchEvent writes a success log row for a matching rule via local provi
   const { db } = await createTestDb();
   const { exactRuleId } = await seedMinimal(db);
   await dispatchEvent(db, 'shop.order.created', {
-    order_id: '123',
-    customer_email: 'buyer@example.com',
+    event: 'shop.order.created',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: {
+      order: { order_number: '123', customer_email: 'buyer@example.com' },
+    },
   });
   const logs = await db.select().from(notification_logs);
   const exactLog = logs.find((l: any) => l.rule_id === exactRuleId);
@@ -47,7 +50,11 @@ test('dispatchEvent with a missing template writes a failure log and does not th
     active: true,
     created_at: now,
   });
-  await dispatchEvent(db, 'shop.order.created', {});
+  await dispatchEvent(db, 'shop.order.created', {
+    event: 'shop.order.created',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: { order: { order_number: 'x', customer_email: 'a@b.com' } },
+  });
   const logs = await db.select().from(notification_logs);
   assert.strictEqual(logs.length, 1);
   assert.strictEqual(logs[0].success, false);
@@ -75,7 +82,11 @@ test('dispatchEvent with no recipients writes a failure log and does not call pr
     active: true,
     created_at: now,
   });
-  await dispatchEvent(db, 'shop.order.created', {});
+  await dispatchEvent(db, 'shop.order.created', {
+    event: 'shop.order.created',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: { order: { order_number: 'x', customer_email: 'a@b.com' } },
+  });
   const logs = await db.select().from(notification_logs);
   assert.strictEqual(logs.length, 1);
   assert.strictEqual(logs[0].success, false);
@@ -87,8 +98,11 @@ test('dispatchEvent with two matching rules writes two log rows', async () => {
   const { db } = await createTestDb();
   const { exactRuleId, wildcardRuleId } = await seedMinimal(db);
   await dispatchEvent(db, 'shop.order.created', {
-    order_id: '123',
-    customer_email: 'buyer@example.com',
+    event: 'shop.order.created',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: {
+      order: { order_number: '123', customer_email: 'buyer@example.com' },
+    },
   });
   const logs = await db.select().from(notification_logs);
   assert.strictEqual(logs.length, 2);
@@ -101,7 +115,11 @@ test('dispatchEvent fires wildcard rule for shop.cart.added', async () => {
   process.env.NOTIFICATIONS_DEV_MODE = 'true';
   const { db } = await createTestDb();
   const { wildcardRuleId } = await seedMinimal(db);
-  await dispatchEvent(db, 'shop.cart.added', {});
+  await dispatchEvent(db, 'shop.cart.added', {
+    event: 'shop.cart.added',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: { cart: {} },
+  });
   const logs = await db.select().from(notification_logs);
   assert.strictEqual(logs.length, 1);
   assert.strictEqual(logs[0].rule_id, wildcardRuleId);
@@ -144,11 +162,15 @@ test('dispatchEvent resolves cc and bcc from payload', async () => {
     provider_name: 'sendgrid',
     to: 'a@b.com',
     cc: 'c@d.com',
-    bcc: '{{ hidden }}',
+    bcc: '{{ data.hidden }}',
     active: true,
     created_at: now,
   });
-  await dispatchEvent(db, 'shop.order.created', { hidden: 'e@f.com' });
+  await dispatchEvent(db, 'shop.order.created', {
+    event: 'shop.order.created',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: { hidden: 'e@f.com', order: { order_number: 'x', customer_email: 'a@b.com' } },
+  });
   const logs = await db.select().from(notification_logs);
   assert.strictEqual(logs.length, 1);
   assert.strictEqual(logs[0].cc, 'c@d.com');
@@ -160,12 +182,15 @@ test('dispatchEvent catch block creates a failure log on unexpected exception', 
   const { db } = await createTestDb();
   const { exactRuleId } = await seedMinimal(db);
 
-  // Use a payload value that throws on String() conversion (null-prototype object)
-  // to trigger an exception during interpolation inside the dispatch loop.
-  // Adjust: the seed template subject is 'Order {{ order_id }}'
+  // Use a value that throws on String() conversion (null-prototype object)
+  // inside the order payload to trigger an exception during interpolation.
   const payload = {
-    customer_email: 'buyer@example.com',
-    order_id: Object.create(null), // causes TypeError in String()
+    event: 'shop.order.created',
+    timestamp: '2026-07-24T10:00:00.000Z',
+    data: {
+      customer_email: 'buyer@example.com',
+      order: { order_number: Object.create(null), customer_email: 'buyer@example.com' },
+    },
   };
 
   await dispatchEvent(db, 'shop.order.created', payload);

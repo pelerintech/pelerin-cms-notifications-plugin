@@ -13,15 +13,18 @@ export default function init(ctx: any): void {
     return;
   }
 
-  ctx.events.subscribe('*', async (data: any) => {
+  ctx.events.subscribe('*', async (event: string, payload: any) => {
     try {
-      const event = data.event ?? data.name;
+      // The bus delivers the event name as the handler's first argument and the
+      // self-contained envelope as the second. Consume it directly — do NOT
+      // reverse-engineer the event name from the payload (data.event ?? data.name)
+      // or re-wrap the payload (data.payload ?? {}): both were wrong for the
+      // ecomm (order/invoice) and pelerin_cms (auth) publishers.
       if (!event) {
         console.warn('[notifications] Received event without name');
         return;
       }
-      const payload = data.payload ?? {};
-      await dispatchEvent(ctx.db, event, payload);
+      await dispatchEvent(ctx.db, event, payload ?? {});
     } catch (err) {
       // Never crash the event bus
       console.error('[notifications] Error processing event:', err);
