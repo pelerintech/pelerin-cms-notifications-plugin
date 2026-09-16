@@ -17,6 +17,12 @@ const providerConfigs = {
     icon: '✉️',
     fields: [
       { key: 'sendgrid_api_key', type: 'password', label: 'API Key', placeholder: 'SG.xxxxx' },
+      {
+        key: 'sendgrid_from_email',
+        type: 'text',
+        label: 'From Email',
+        placeholder: 'orders@yourdomain.com',
+      },
     ],
   },
   mailgun: {
@@ -30,6 +36,12 @@ const providerConfigs = {
         placeholder: 'https://api.mailgun.net/v3/your-domain.com',
       },
       { key: 'mailgun_api_key', type: 'password', label: 'API Key', placeholder: 'key-xxxxx' },
+      {
+        key: 'mailgun_from_email',
+        type: 'text',
+        label: 'From Email',
+        placeholder: 'orders@yourdomain.com',
+      },
     ],
   },
   ses: {
@@ -56,6 +68,12 @@ const providerConfigs = {
       { key: 'smtp_username', type: 'text', label: 'Username', placeholder: 'user@example.com' },
       { key: 'smtp_password', type: 'password', label: 'Password', placeholder: '••••••••' },
       { key: 'smtp_tls', type: 'checkbox', label: 'Use TLS', placeholder: '' },
+      {
+        key: 'smtp_from_email',
+        type: 'text',
+        label: 'From Email',
+        placeholder: 'orders@yourdomain.com',
+      },
     ],
   },
   brevo: {
@@ -69,6 +87,12 @@ const providerConfigs = {
         label: 'API URL',
         placeholder: 'https://api.brevo.com/v3/smtp/email',
         defaultValue: 'https://api.brevo.com/v3/smtp/email',
+      },
+      {
+        key: 'brevo_from_email',
+        type: 'text',
+        label: 'From Email',
+        placeholder: 'orders@yourdomain.com',
       },
     ],
   },

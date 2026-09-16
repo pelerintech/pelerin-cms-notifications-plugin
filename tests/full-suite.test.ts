@@ -65,6 +65,7 @@ const TEST_FILES: string[] = [
   'tests/pages/admin-template-edit-loads.test.ts',
   'tests/pages/admin-logs-index-script-syntax.test.ts',
   'tests/pages/admin-new-create-form.test.ts',
+  'tests/pages/admin-providers-from-email-field.test.ts',
   'tests/pages/admin-rule-provider-registry.test.ts',
   'tests/pages/admin-template-guide-auth.test.ts',
   'tests/pages/admin-providers-name-script-syntax.test.ts',
@@ -133,7 +134,7 @@ test('full test suite passes (node --test <all test files>)', () => {
   const m = testsLine.match(/(\d+)/);
   const testCount = m ? parseInt(m[1], 10) : 0;
   assert.ok(
-    testCount >= 440,
-    `child node --test registered only ${testCount} tests — expected >=440; possible silent skip. Output tail:\n${output.slice(-1500)}`
+    testCount >= 445,
+    `child node --test registered only ${testCount} tests — expected >=445; possible silent skip. Output tail:\n${output.slice(-1500)}`
   );
 });
