@@ -12,12 +12,10 @@ const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
 const originalDevMode = process.env.NOTIFICATIONS_DEV_MODE;
 const originalSendgridEnv = process.env.SENDGRID_API_KEY;
-const originalFromEmail = process.env.SENDGRID_FROM_EMAIL;
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
   delete process.env.SENDGRID_API_KEY;
-  process.env.SENDGRID_FROM_EMAIL = 'sg@test.com';
 });
 
 after(() => {
@@ -27,8 +25,6 @@ after(() => {
   else process.env.NOTIFICATIONS_DEV_MODE = originalDevMode;
   if (originalSendgridEnv === undefined) delete process.env.SENDGRID_API_KEY;
   else process.env.SENDGRID_API_KEY = originalSendgridEnv;
-  if (originalFromEmail === undefined) delete process.env.SENDGRID_FROM_EMAIL;
-  else process.env.SENDGRID_FROM_EMAIL = originalFromEmail;
 });
 
 describe('dispatch credential pass-through (structural)', () => {
@@ -71,6 +67,7 @@ describe('dispatch credential pass-through (behavioral)', () => {
   test('prod mode: sendgrid rule with encrypted creds → real send, success log', async () => {
     await seedMinimal(db);
     await setSetting(db, 'sendgrid_api_key', encrypt('SG.real-key'));
+    await setSetting(db, 'sendgrid_from_email', encrypt('sg@test.com'));
 
     await dispatchEvent(db, 'shop.order.created', {
       event: 'shop.order.created',

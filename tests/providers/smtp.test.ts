@@ -6,21 +6,14 @@ import { encrypt } from '../../src/lib/crypto.ts';
 
 const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
-const originalFromEmail = process.env.SMTP_FROM_EMAIL;
-const originalDev = process.env.NOTIFICATIONS_DEV_MODE;
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
-  process.env.SMTP_FROM_EMAIL = 'sender@example.com';
 });
 
 after(() => {
   if (originalKey === undefined) delete process.env.NOTIFICATIONS_ENCRYPTION_KEY;
   else process.env.NOTIFICATIONS_ENCRYPTION_KEY = originalKey;
-  if (originalFromEmail === undefined) delete process.env.SMTP_FROM_EMAIL;
-  else process.env.SMTP_FROM_EMAIL = originalFromEmail;
-  if (originalDev === undefined) delete process.env.NOTIFICATIONS_DEV_MODE;
-  else process.env.NOTIFICATIONS_DEV_MODE = originalDev;
 });
 
 import { smtp } from '../../src/providers/smtp.ts';
@@ -62,6 +55,7 @@ describe('SMTP requireTLS behavior', () => {
     await setSetting(db, 'smtp_port', encrypt('587'));
     await setSetting(db, 'smtp_username', encrypt('user'));
     await setSetting(db, 'smtp_password', encrypt('pass'));
+    await setSetting(db, 'smtp_from_email', encrypt('sender@example.com'));
     mod = await import('../../src/providers/smtp.ts');
     capturedConfig = null;
   });

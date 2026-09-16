@@ -34,6 +34,7 @@ const TEST_FILES: string[] = [
   'tests/dispatch/dispatch-credentials.test.ts',
   'tests/dispatch/dispatch-ses.test.ts',
   'tests/dispatch/dispatch.test.ts',
+  'tests/dispatch/dispatch-from-email.test.ts',
   'tests/dispatch/envelope-render.test.ts',
   'tests/dispatch/envelope-validation.test.ts',
   'tests/dispatch/auth-invoice.test.ts',
@@ -50,6 +51,8 @@ const TEST_FILES: string[] = [
   'tests/lib/render-recipient.test.ts',
   'tests/lib/data/logs.test.ts',
   'tests/lib/data/provider-configured.test.ts',
+  'tests/lib/data/provider-from-email-info.test.ts',
+  'tests/lib/data/rules-from-email.test.ts',
   'tests/lib/data/rules-create-channel.test.ts',
   'tests/lib/data/rules-update-channel.test.ts',
   'tests/lib/data/rules.test.ts',
@@ -57,6 +60,9 @@ const TEST_FILES: string[] = [
   'tests/lib/data/templates.test.ts',
   'tests/local-provider.test.ts',
   'tests/matcher.test.ts',
+  'tests/pages/admin-rule-from-email-create.test.ts',
+  'tests/pages/admin-rule-from-email-edit.test.ts',
+  'tests/pages/admin-template-edit-loads.test.ts',
   'tests/pages/admin-logs-index-script-syntax.test.ts',
   'tests/pages/admin-new-create-form.test.ts',
   'tests/pages/admin-rule-provider-registry.test.ts',
@@ -69,11 +75,14 @@ const TEST_FILES: string[] = [
   'tests/pages/admin-templates-id-validation.test.ts',
   'tests/pages/admin-templates-index-script-syntax.test.ts',
   'tests/providers/all.test.ts',
+  'tests/providers/all-from-email-config.test.ts',
   'tests/providers/brevo.test.ts',
   'tests/providers/brevo-send.test.ts',
   'tests/providers/credentials.test.ts',
   'tests/providers/from-email.test.ts',
   'tests/providers/list-objects.test.ts',
+  'tests/providers/provider-from-email.test.ts',
+  'tests/providers/sendparams-from.test.ts',
   'tests/providers/mailgun.test.ts',
   'tests/providers/provider-timeouts.test.ts',
   'tests/providers/sendgrid.test.ts',
@@ -83,6 +92,7 @@ const TEST_FILES: string[] = [
   'tests/schema.test.ts',
   'tests/template-content.test.ts',
   'tests/schemas/rule-schema-channel.test.ts',
+  'tests/schemas/rule-schema-from-email.test.ts',
   'tests/schemas/rule-schema.test.ts',
   'tests/schemas/schemas.test.ts',
   'tests/struct/no-astro-db-in-api.test.ts',
@@ -123,7 +133,7 @@ test('full test suite passes (node --test <all test files>)', () => {
   const m = testsLine.match(/(\d+)/);
   const testCount = m ? parseInt(m[1], 10) : 0;
   assert.ok(
-    testCount >= 380,
-    `child node --test registered only ${testCount} tests — expected >=380; possible silent skip. Output tail:\n${output.slice(-1500)}`
+    testCount >= 440,
+    `child node --test registered only ${testCount} tests — expected >=440; possible silent skip. Output tail:\n${output.slice(-1500)}`
   );
 });

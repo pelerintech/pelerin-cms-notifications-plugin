@@ -6,18 +6,14 @@ import { encrypt } from '../../src/lib/crypto.ts';
 
 const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
-const originalFromEmail = process.env.MAILGUN_FROM_EMAIL;
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
-  process.env.MAILGUN_FROM_EMAIL = 'sender@example.com';
 });
 
 after(() => {
   if (originalKey === undefined) delete process.env.NOTIFICATIONS_ENCRYPTION_KEY;
   else process.env.NOTIFICATIONS_ENCRYPTION_KEY = originalKey;
-  if (originalFromEmail === undefined) delete process.env.MAILGUN_FROM_EMAIL;
-  else process.env.MAILGUN_FROM_EMAIL = originalFromEmail;
 });
 
 import { mailgun } from '../../src/providers/mailgun.ts';
@@ -47,6 +43,7 @@ describe('Mailgun FormData and URL validation', () => {
     db = t.db;
     await setSetting(db, 'mailgun_api_key', encrypt('key-xxx'));
     await setSetting(db, 'mailgun_url', encrypt('https://api.mailgun.net/v3/domain.com'));
+    await setSetting(db, 'mailgun_from_email', encrypt('sender@example.com'));
   });
 
   afterEach(() => {

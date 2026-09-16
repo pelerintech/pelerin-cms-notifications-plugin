@@ -152,6 +152,7 @@ describe('runPost (rules/create) — auth + validation + happy + guardrail + dup
     try {
       await seedTemplate(db);
       await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
+      await setSetting(db, 'sendgrid_from_email', encrypt('noreply@shop.com'));
       const sdk = makeFakeSdk();
       const ctx = makeCtx({
         url: 'http://localhost/api/plugins/notifications/rules',

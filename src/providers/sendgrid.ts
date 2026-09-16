@@ -38,12 +38,17 @@ export const sendgridProvider: NotificationProvider = {
 
   getConfigSchema(): ProviderConfigSchema {
     return {
-      requiredKeys: ['sendgrid_api_key'],
+      requiredKeys: ['sendgrid_api_key', 'sendgrid_from_email'],
       fields: {
         sendgrid_api_key: {
           type: 'password',
           label: 'API Key',
           description: 'Your SendGrid API key from https://app.sendgrid.com/settings/api_keys',
+        },
+        sendgrid_from_email: {
+          type: 'text',
+          label: 'From Email',
+          description: 'Sender address (must be a verified identity on this provider account)',
         },
       },
     };
@@ -55,7 +60,7 @@ export const sendgridProvider: NotificationProvider = {
       return { success: false, error: 'SendGrid API key not configured' };
     }
 
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+    const fromEmail = params.from ?? (await getSettingDecrypted(db, 'sendgrid_from_email'));
     if (!fromEmail) {
       return { success: false, error: 'SendGrid from email not configured' };
     }

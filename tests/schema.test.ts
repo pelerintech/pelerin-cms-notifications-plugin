@@ -1,6 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
+const schema = await import('../src/db/schema.ts');
+
 /**
  * Lightweight structural test — KNOWN BEHAVIORAL GAP.
  *
@@ -11,8 +13,6 @@ import assert from 'node:assert';
  * correctness is verified elsewhere.
  */
 describe('Database schema (schema.ts)', async () => {
-  const schema = await import('../src/db/schema.ts');
-
   it('exports notification_rules table', () => {
     assert.ok(schema.notification_rules, 'notification_rules must be exported');
   });
@@ -27,5 +27,19 @@ describe('Database schema (schema.ts)', async () => {
 
   it('exports notification_logs table', () => {
     assert.ok(schema.notification_logs, 'notification_logs must be exported');
+  });
+});
+
+describe('notification_rules.from_email column', () => {
+  it('has a from_email column', () => {
+    assert.ok(
+      schema.notification_rules.from_email,
+      'notification_rules must have a from_email column'
+    );
+  });
+
+  it('from_email is nullable (not NOT NULL)', () => {
+    const col = schema.notification_rules.from_email;
+    assert.strictEqual(col.notNull, false, 'from_email must be nullable (no .notNull())');
   });
 });

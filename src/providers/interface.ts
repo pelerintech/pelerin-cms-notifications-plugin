@@ -13,6 +13,8 @@ export interface SendParams {
   subject: string;
   bodyHtml?: string;
   bodyText?: string;
+  /** The from-address (rule override). Providers fall back to their settings default when absent. */
+  from?: string;
 }
 
 export interface SendResult {

@@ -14,21 +14,10 @@ import { local } from '../../src/providers/local.ts';
 const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
 const originalSendgridEnv = process.env.SENDGRID_API_KEY;
-const originalFromEmails = {
-  sendgrid: process.env.SENDGRID_FROM_EMAIL,
-  mailgun: process.env.MAILGUN_FROM_EMAIL,
-  brevo: process.env.BREVO_FROM_EMAIL,
-  smtp: process.env.SMTP_FROM_EMAIL,
-};
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
   delete process.env.SENDGRID_API_KEY;
-  // Set FROM_EMAIL env vars for credential tests to proceed past the fail-loud check
-  process.env.SENDGRID_FROM_EMAIL = 'sg@test.com';
-  process.env.MAILGUN_FROM_EMAIL = 'mg@test.com';
-  process.env.BREVO_FROM_EMAIL = 'br@test.com';
-  process.env.SMTP_FROM_EMAIL = 'smtp@test.com';
 });
 
 after(() => {
@@ -36,14 +25,6 @@ after(() => {
   else process.env.NOTIFICATIONS_ENCRYPTION_KEY = originalKey;
   if (originalSendgridEnv === undefined) delete process.env.SENDGRID_API_KEY;
   else process.env.SENDGRID_API_KEY = originalSendgridEnv;
-  if (originalFromEmails.sendgrid === undefined) delete process.env.SENDGRID_FROM_EMAIL;
-  else process.env.SENDGRID_FROM_EMAIL = originalFromEmails.sendgrid;
-  if (originalFromEmails.mailgun === undefined) delete process.env.MAILGUN_FROM_EMAIL;
-  else process.env.MAILGUN_FROM_EMAIL = originalFromEmails.mailgun;
-  if (originalFromEmails.brevo === undefined) delete process.env.BREVO_FROM_EMAIL;
-  else process.env.BREVO_FROM_EMAIL = originalFromEmails.brevo;
-  if (originalFromEmails.smtp === undefined) delete process.env.SMTP_FROM_EMAIL;
-  else process.env.SMTP_FROM_EMAIL = originalFromEmails.smtp;
 });
 
 describe('SendGrid provider credentials', () => {
@@ -72,6 +53,7 @@ describe('SendGrid provider credentials', () => {
 
   test('reads decrypted API key from settings table (not process.env)', async () => {
     await setSetting(db, 'sendgrid_api_key', encrypt('SG.real-key'));
+    await setSetting(db, 'sendgrid_from_email', encrypt('sg@test.com'));
     const result = await sendgrid.send({ to: ['a@b.com'], subject: 's', bodyText: 't' }, db);
     assert.strictEqual(result.success, true);
     assert.strictEqual(result.messageId, 'msg-1');
@@ -114,6 +96,7 @@ describe('Mailgun provider credentials', () => {
   test('reads decrypted URL + API key from settings table', async () => {
     await setSetting(db, 'mailgun_url', encrypt('https://api.mg.net/v3/d'));
     await setSetting(db, 'mailgun_api_key', encrypt('key-real'));
+    await setSetting(db, 'mailgun_from_email', encrypt('mg@test.com'));
     const result = await mailgun.send({ to: ['a@b.com'], subject: 's' }, db);
     assert.strictEqual(result.success, true);
     assert.ok(captured, 'fetch was called');
@@ -156,6 +139,7 @@ describe('Brevo provider credentials', () => {
   test('reads decrypted API key + URL from settings table', async () => {
     await setSetting(db, 'brevo_api_key', encrypt('xkeysib-real'));
     await setSetting(db, 'brevo_api_url', encrypt('https://api.brevo.com/v3/smtp/email'));
+    await setSetting(db, 'brevo_from_email', encrypt('br@test.com'));
     const result = await brevo.send({ to: ['a@b.com'], subject: 's' }, db);
     assert.strictEqual(result.success, true);
     assert.ok(captured, 'fetch was called');
@@ -184,6 +168,7 @@ describe('SMTP provider credentials', () => {
     await setSetting(db, 'smtp_username', encrypt('user'));
     await setSetting(db, 'smtp_password', encrypt('pass'));
     await setSetting(db, 'smtp_tls', encrypt('true'));
+    await setSetting(db, 'smtp_from_email', encrypt('smtp@test.com'));
     const result = await smtp.send({ to: ['a@b.com'], subject: 's' }, db);
     assert.strictEqual(result.success, false);
     assert.match(result.error || '', /SMTP (request failed|send timed out)/);

@@ -47,6 +47,7 @@ export const notification_rules = sqliteTable(
     to: text('to').notNull(),
     cc: text('cc'),
     bcc: text('bcc'),
+    from_email: text('from_email'),
     active: integer('active', { mode: 'boolean' }).notNull(),
     created_at: dateType('created_at').notNull(),
     updated_at: dateType('updated_at'),

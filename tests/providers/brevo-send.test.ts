@@ -15,18 +15,14 @@ import { brevo } from '../../src/providers/brevo.ts';
 
 const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
-const originalFromEmail = process.env.BREVO_FROM_EMAIL;
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
-  process.env.BREVO_FROM_EMAIL = 'sender@example.com';
 });
 
 after(() => {
   if (originalKey === undefined) delete process.env.NOTIFICATIONS_ENCRYPTION_KEY;
   else process.env.NOTIFICATIONS_ENCRYPTION_KEY = originalKey;
-  if (originalFromEmail === undefined) delete process.env.BREVO_FROM_EMAIL;
-  else process.env.BREVO_FROM_EMAIL = originalFromEmail;
 });
 
 describe('Brevo provider send (stubbed fetch)', () => {
@@ -61,6 +57,7 @@ describe('Brevo provider send (stubbed fetch)', () => {
   test('success: sends request with `sender` (not `from`) and returns messageId', async () => {
     await setSetting(db, 'brevo_api_key', encrypt('brevo-key-123'));
     await setSetting(db, 'brevo_api_url', encrypt('https://api.brevo.com/v3/smtp/email'));
+    await setSetting(db, 'brevo_from_email', encrypt('sender@example.com'));
 
     const result = await brevo.send(
       {
@@ -114,6 +111,7 @@ describe('Brevo provider send (stubbed fetch)', () => {
   test('API error → failure with status and body', async () => {
     await setSetting(db, 'brevo_api_key', encrypt('brevo-key-123'));
     await setSetting(db, 'brevo_api_url', encrypt('https://api.brevo.com/v3/smtp/email'));
+    await setSetting(db, 'brevo_from_email', encrypt('sender@example.com'));
 
     globalThis.fetch = async () => {
       return {
@@ -132,6 +130,7 @@ describe('Brevo provider send (stubbed fetch)', () => {
   test('fetch throws → failure with error message', async () => {
     await setSetting(db, 'brevo_api_key', encrypt('brevo-key-123'));
     await setSetting(db, 'brevo_api_url', encrypt('https://api.brevo.com/v3/smtp/email'));
+    await setSetting(db, 'brevo_from_email', encrypt('sender@example.com'));
 
     globalThis.fetch = async () => {
       throw new Error('Network failure');

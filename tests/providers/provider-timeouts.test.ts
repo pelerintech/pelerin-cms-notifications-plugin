@@ -13,35 +13,16 @@ import { encrypt } from '../../src/lib/crypto.ts';
 
 const KEY = 'test-encryption-key-32+chars-long';
 const originalKey = process.env.NOTIFICATIONS_ENCRYPTION_KEY;
-const originalFromEmails = {
-  sendgrid: process.env.SENDGRID_FROM_EMAIL,
-  mailgun: process.env.MAILGUN_FROM_EMAIL,
-  brevo: process.env.BREVO_FROM_EMAIL,
-  smtp: process.env.SMTP_FROM_EMAIL,
-};
 const SHORT_MS = 100;
 const TEST_TIMEOUT_MS = 15_000;
 
 before(() => {
   process.env.NOTIFICATIONS_ENCRYPTION_KEY = KEY;
-  // Set FROM_EMAIL env vars so timeout tests reach the network call
-  process.env.SENDGRID_FROM_EMAIL = 'sg@test.com';
-  process.env.MAILGUN_FROM_EMAIL = 'mg@test.com';
-  process.env.BREVO_FROM_EMAIL = 'br@test.com';
-  process.env.SMTP_FROM_EMAIL = 'smtp@test.com';
 });
 
 after(() => {
   if (originalKey === undefined) delete process.env.NOTIFICATIONS_ENCRYPTION_KEY;
   else process.env.NOTIFICATIONS_ENCRYPTION_KEY = originalKey;
-  if (originalFromEmails.sendgrid === undefined) delete process.env.SENDGRID_FROM_EMAIL;
-  else process.env.SENDGRID_FROM_EMAIL = originalFromEmails.sendgrid;
-  if (originalFromEmails.mailgun === undefined) delete process.env.MAILGUN_FROM_EMAIL;
-  else process.env.MAILGUN_FROM_EMAIL = originalFromEmails.mailgun;
-  if (originalFromEmails.brevo === undefined) delete process.env.BREVO_FROM_EMAIL;
-  else process.env.BREVO_FROM_EMAIL = originalFromEmails.brevo;
-  if (originalFromEmails.smtp === undefined) delete process.env.SMTP_FROM_EMAIL;
-  else process.env.SMTP_FROM_EMAIL = originalFromEmails.smtp;
 });
 
 /**
@@ -78,6 +59,7 @@ describe('SendGrid provider timeout', { timeout: TEST_TIMEOUT_MS }, () => {
     const t = await createTestDb();
     db = t.db;
     await setSetting(db, 'sendgrid_api_key', encrypt('sg-key-123'));
+    await setSetting(db, 'sendgrid_from_email', encrypt('sg@test.com'));
     oldFetch = globalThis.fetch;
     globalThis.fetch = signalAwareNeverResolvingFetch;
     mod = await import('../../src/providers/sendgrid.ts');
@@ -111,6 +93,7 @@ describe('Mailgun provider timeout', { timeout: TEST_TIMEOUT_MS }, () => {
     db = t.db;
     await setSetting(db, 'mailgun_api_key', encrypt('mg-key-123'));
     await setSetting(db, 'mailgun_url', encrypt('https://api.mailgun.net/v3/example.com'));
+    await setSetting(db, 'mailgun_from_email', encrypt('mg@test.com'));
     oldFetch = globalThis.fetch;
     globalThis.fetch = signalAwareNeverResolvingFetch;
     mod = await import('../../src/providers/mailgun.ts');
@@ -144,6 +127,7 @@ describe('Brevo provider timeout', { timeout: TEST_TIMEOUT_MS }, () => {
     db = t.db;
     await setSetting(db, 'brevo_api_key', encrypt('brevo-key-123'));
     await setSetting(db, 'brevo_api_url', encrypt('https://api.brevo.com/v3/smtp/email'));
+    await setSetting(db, 'brevo_from_email', encrypt('br@test.com'));
     oldFetch = globalThis.fetch;
     globalThis.fetch = signalAwareNeverResolvingFetch;
     mod = await import('../../src/providers/brevo.ts');
@@ -219,17 +203,6 @@ describe('SES provider timeout', { timeout: TEST_TIMEOUT_MS }, () => {
 describe('SMTP provider timeout', { timeout: TEST_TIMEOUT_MS }, () => {
   let db: any;
   let mod: any;
-  let originalFromEmail: string | undefined;
-
-  before(() => {
-    originalFromEmail = process.env.SMTP_FROM_EMAIL;
-    process.env.SMTP_FROM_EMAIL = 'test@example.com';
-  });
-
-  after(() => {
-    if (originalFromEmail === undefined) delete process.env.SMTP_FROM_EMAIL;
-    else process.env.SMTP_FROM_EMAIL = originalFromEmail;
-  });
 
   beforeEach(async () => {
     const t = await createTestDb();
@@ -238,6 +211,7 @@ describe('SMTP provider timeout', { timeout: TEST_TIMEOUT_MS }, () => {
     await setSetting(db, 'smtp_port', encrypt('587'));
     await setSetting(db, 'smtp_username', encrypt('user'));
     await setSetting(db, 'smtp_password', encrypt('pass'));
+    await setSetting(db, 'smtp_from_email', encrypt('test@example.com'));
     mod = await import('../../src/providers/smtp.ts');
   });
 

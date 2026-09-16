@@ -180,6 +180,10 @@ export async function dispatchEvent(
           subject,
           bodyHtml: bodyHtml ?? undefined,
           bodyText: bodyText ?? undefined,
+          // Carry the rule's effective from-address down to the provider. For
+          // legacy/null-from rules this is undefined, so the provider falls back
+          // to its own settings `*_from_email` default.
+          from: rule.from_email ?? undefined,
         },
         db
       );

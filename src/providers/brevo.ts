@@ -38,7 +38,7 @@ export const brevoProvider: NotificationProvider = {
 
   getConfigSchema(): ProviderConfigSchema {
     return {
-      requiredKeys: ['brevo_api_key', 'brevo_api_url'],
+      requiredKeys: ['brevo_api_key', 'brevo_api_url', 'brevo_from_email'],
       fields: {
         brevo_api_key: {
           type: 'password',
@@ -50,6 +50,11 @@ export const brevoProvider: NotificationProvider = {
           label: 'API URL',
           description: 'Brevo SMTP API endpoint',
           default: 'https://api.brevo.com/v3/smtp/email',
+        },
+        brevo_from_email: {
+          type: 'text',
+          label: 'From Email',
+          description: 'Sender address (must be a verified identity on this provider account)',
         },
       },
     };
@@ -66,7 +71,7 @@ export const brevoProvider: NotificationProvider = {
       return { success: false, error: 'Brevo API URL not configured' };
     }
 
-    const fromEmail = process.env.BREVO_FROM_EMAIL;
+    const fromEmail = params.from ?? (await getSettingDecrypted(db, 'brevo_from_email'));
     if (!fromEmail) {
       return { success: false, error: 'Brevo from email not configured' };
     }

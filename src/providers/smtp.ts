@@ -103,7 +103,7 @@ export const smtpProvider: NotificationProvider = {
 
   getConfigSchema(): ProviderConfigSchema {
     return {
-      requiredKeys: ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password'],
+      requiredKeys: ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'smtp_from_email'],
       fields: {
         smtp_host: {
           type: 'text',
@@ -124,6 +124,11 @@ export const smtpProvider: NotificationProvider = {
           type: 'password',
           label: 'Password',
           description: 'SMTP authentication password',
+        },
+        smtp_from_email: {
+          type: 'text',
+          label: 'From Email',
+          description: 'Sender address (must be a verified identity on this provider account)',
         },
         smtp_tls: {
           type: 'boolean',
@@ -163,7 +168,7 @@ export const smtpProvider: NotificationProvider = {
         socketTimeout: SEND_TIMEOUT_MS,
       });
 
-      const smtpFromEmail = process.env.SMTP_FROM_EMAIL;
+      const smtpFromEmail = params.from ?? (await getSettingDecrypted(db, 'smtp_from_email'));
       if (!smtpFromEmail) {
         return { success: false, error: 'SMTP from email not configured' };
       }

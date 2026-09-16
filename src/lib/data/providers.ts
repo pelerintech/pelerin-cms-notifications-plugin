@@ -51,6 +51,8 @@ export interface AvailableProviderInfo {
   name: string;
   channels: string[];
   configured: boolean;
+  /** The provider's configured from-email default (decrypted), or null if unset. */
+  fromEmail: string | null;
 }
 
 /**
@@ -71,7 +73,9 @@ export async function listAvailableProvidersForChannel(
   for (const p of candidates) {
     const configured = await isProviderConfigured(db, p.name);
     if (!isDev && !configured) continue;
-    entries.push({ name: p.name, channels: p.channels, configured });
+    const raw = await getSetting(db, `${p.name}_from_email`);
+    const fromEmail = raw ? decryptIfNeeded(raw) || null : null;
+    entries.push({ name: p.name, channels: p.channels, configured, fromEmail });
   }
   return entries;
 }

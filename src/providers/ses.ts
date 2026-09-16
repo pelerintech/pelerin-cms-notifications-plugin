@@ -122,7 +122,7 @@ export const sesProvider: NotificationProvider = {
     const region = await getSettingDecrypted(db, 'ses_region');
     const accessKey = await getSettingDecrypted(db, 'ses_access_key');
     const secretKey = await getSettingDecrypted(db, 'ses_secret_key');
-    const fromEmail = await getSettingDecrypted(db, 'ses_from_email');
+    const fromEmail = params.from ?? (await getSettingDecrypted(db, 'ses_from_email'));
 
     if (!accessKey || !secretKey) {
       return { success: false, error: 'AWS SES credentials not configured' };

@@ -30,7 +30,16 @@ describe('isProviderConfigured', () => {
 
   test('all required keys present and non-empty → true', async () => {
     await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
+    await setSetting(db, 'sendgrid_from_email', encrypt('noreply@shop.com'));
     assert.strictEqual(await isProviderConfigured(db, 'sendgrid'), true);
+  });
+
+  test('from-email is a required key — API key alone is not configured', async () => {
+    await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
+    await setSetting(db, 'sendgrid_from_email', encrypt('noreply@shop.com'));
+    // Remove the from-email setting: provider must become unconfigured.
+    await setSetting(db, 'sendgrid_from_email', '');
+    assert.strictEqual(await isProviderConfigured(db, 'sendgrid'), false);
   });
 
   test('no settings rows at all → false', async () => {
@@ -64,6 +73,7 @@ describe('isProviderConfigured', () => {
     await setSetting(db, 'smtp_port', encrypt('587'));
     await setSetting(db, 'smtp_username', encrypt('user@example.com'));
     await setSetting(db, 'smtp_password', encrypt('pw'));
+    await setSetting(db, 'smtp_from_email', encrypt('noreply@shop.com'));
     assert.strictEqual(await isProviderConfigured(db, 'smtp'), true);
   });
 
@@ -78,6 +88,7 @@ describe('isProviderConfigured', () => {
     await setSetting(db, 'smtp_port', encrypt('587'));
     await setSetting(db, 'smtp_username', encrypt('user@example.com'));
     await setSetting(db, 'smtp_password', encrypt('pw'));
+    await setSetting(db, 'smtp_from_email', encrypt('noreply@shop.com'));
     const available = await listAvailableProvidersForChannel(db, 'email', false);
     assert.ok(
       available.some((p) => p.name === 'smtp'),

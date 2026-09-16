@@ -49,6 +49,10 @@ export const ruleSchema = z.object({
     .nullable()
     .optional()
     .refine(validEmailListOrEmpty, 'Must be comma-separated valid email addresses'),
+  // from_email is nullable/optional with NO validation — the form is the only
+  // gate (presence + email format). Declared so zod doesn't strip it (zod
+  // strips unknown keys by default), but never validated here.
+  from_email: z.string().nullable().optional(),
   active: z.boolean().optional(),
 });
 

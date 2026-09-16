@@ -126,6 +126,25 @@ function providerLabel(name) {
         </select>
       </div>
 
+      {/* From Email */}
+      <div class="form-control mb-4">
+        <label class="label">
+          <span class="label-text font-medium">From Email</span>
+          <span class="label-text-alt text-base-content/50"
+            >Sender address (must be a verified identity on the provider account)</span
+          >
+        </label>
+        <input
+          type="email"
+          name="from_email"
+          class="input input-bordered w-full"
+          value={rule?.from_email ??
+            availableProviders.find((p) => p.name === rule?.provider_name)?.fromEmail ??
+            ''}
+          required
+        />
+      </div>
+
       {/* Recipients */}
       <div class="form-control mb-4">
         <label class="label">
@@ -189,6 +208,20 @@ function providerLabel(name) {
 </AdminLayout>
 
 <script>
+  // Provider → from-email default map, used to pre-fill the from_email input
+  // when a provider is selected (copy-at-update: the rule stores this value).
+  const providerFromEmail = Object.fromEntries(
+    availableProviders.map((p) => [p.name, p.fromEmail || ''])
+  );
+  const fromEmailInput = document.querySelector('input[name="from_email"]');
+  const providerSelect = document.querySelector('select[name="provider_name"]');
+  providerSelect &&
+    providerSelect.addEventListener('change', () => {
+      if (fromEmailInput && providerFromEmail[providerSelect.value] !== undefined) {
+        fromEmailInput.value = providerFromEmail[providerSelect.value] || '';
+      }
+    });
+
   document.getElementById('rule-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);

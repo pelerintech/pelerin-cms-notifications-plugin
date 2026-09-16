@@ -48,6 +48,7 @@ describe('runGet (rules/providers) — auth + dev/prod filtering', () => {
     const { db, cleanup } = await createTestDb();
     try {
       await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
+      await setSetting(db, 'sendgrid_from_email', encrypt('noreply@shop.com'));
       const res = await runGet({
         db,
         sdk: makeFakeSdk(),
@@ -133,6 +134,7 @@ describe('runGet (rules/providers) — auth + dev/prod filtering', () => {
     const { db, cleanup } = await createTestDb();
     try {
       await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
+      await setSetting(db, 'sendgrid_from_email', encrypt('noreply@shop.com'));
       const res = await runGet({
         db,
         sdk: makeFakeSdk(),

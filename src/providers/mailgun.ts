@@ -38,7 +38,7 @@ export const mailgunProvider: NotificationProvider = {
 
   getConfigSchema(): ProviderConfigSchema {
     return {
-      requiredKeys: ['mailgun_url', 'mailgun_api_key'],
+      requiredKeys: ['mailgun_url', 'mailgun_api_key', 'mailgun_from_email'],
       fields: {
         mailgun_url: {
           type: 'text',
@@ -49,6 +49,11 @@ export const mailgunProvider: NotificationProvider = {
           type: 'password',
           label: 'API Key',
           description: 'Your Mailgun private API key',
+        },
+        mailgun_from_email: {
+          type: 'text',
+          label: 'From Email',
+          description: 'Sender address (must be a verified identity on this provider account)',
         },
       },
     };
@@ -69,7 +74,7 @@ export const mailgunProvider: NotificationProvider = {
       return { success: false, error: 'Mailgun API URL not configured' };
     }
 
-    const fromEmail = process.env.MAILGUN_FROM_EMAIL;
+    const fromEmail = params.from ?? (await getSettingDecrypted(db, 'mailgun_from_email'));
     if (!fromEmail) {
       return { success: false, error: 'Mailgun from email not configured' };
     }

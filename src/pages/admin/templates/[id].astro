@@ -4,12 +4,22 @@
  */
 import AdminLayout from 'pelerin:admin-layout';
 import { createPluginContext } from 'pelerin:plugin-sdk';
+import { getTemplate } from '../../../lib/data/templates.ts';
 
 const sdk = createPluginContext();
 const user = await sdk.auth.requireAdmin(Astro.request);
 
 const id = Astro.params.id;
 const returnPage = Astro.url.searchParams.get('page') || '1';
+
+// Load the template being edited directly via the accessor so the edit form
+// is pre-filled (server-side fetch of our own admin-gated API would 401).
+let template = null;
+try {
+  template = await getTemplate(sdk.db, id);
+} catch {
+  // Silently fail — the not-found guard below renders a graceful message.
+}
 ---
 
 <AdminLayout
@@ -20,6 +30,14 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
   <div class="col-span-12 max-w-3xl">
     <h1 class="text-2xl font-bold mb-6">Edit Template</h1>
 
+    {
+      !template && (
+        <div class="alert alert-error mb-4">
+          <span>Template not found. It may have been deleted.</span>
+        </div>
+      )
+    }
+
     {/* Form */}
     <form id="template-form">
       {/* Name */}
@@ -27,7 +45,13 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
         <label class="label">
           <span class="label-text font-medium">Template Name</span>
         </label>
-        <input type="text" name="name" class="input input-bordered w-full" required />
+        <input
+          type="text"
+          name="name"
+          class="input input-bordered w-full"
+          value={template?.name || ''}
+          required
+        />
       </div>
 
       {/* Subject */}
@@ -35,7 +59,13 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
         <label class="label">
           <span class="label-text font-medium">Subject</span>
         </label>
-        <input type="text" name="subject" class="input input-bordered w-full" required />
+        <input
+          type="text"
+          name="subject"
+          class="input input-bordered w-full"
+          value={template?.subject || ''}
+          required
+        />
       </div>
 
       {/* Body HTML */}
@@ -44,7 +74,8 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
           <span class="label-text font-medium">Body (HTML)</span>
         </label>
         <textarea name="body_html" class="textarea textarea-bordered w-full h-48 font-mono text-sm"
-        ></textarea>
+          >{template?.body_html || ''}</textarea
+        >
       </div>
 
       {/* Body Text */}
@@ -53,7 +84,8 @@ const returnPage = Astro.url.searchParams.get('page') || '1';
           <span class="label-text font-medium">Body (Plain Text)</span>
         </label>
         <textarea name="body_text" class="textarea textarea-bordered w-full h-32 font-mono text-sm"
-        ></textarea>
+          >{template?.body_text || ''}</textarea
+        >
       </div>
 
       {/* Syntax + available variables reference */}

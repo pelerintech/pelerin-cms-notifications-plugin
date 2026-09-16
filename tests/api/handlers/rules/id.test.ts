@@ -160,6 +160,7 @@ describe('runPut (rules/[id]) — auth + 404 + happy + guardrail', () => {
       await setSetting(db, 'sendgrid_api_key', encrypt('SG.realkey'));
       await setSetting(db, 'mailgun_url', encrypt('https://api.mailgun.net/v3/x'));
       await setSetting(db, 'mailgun_api_key', encrypt('key-xxx'));
+      await setSetting(db, 'mailgun_from_email', encrypt('noreply@shop.com'));
       const id = await seedRule(db, 'sendgrid');
       const res = await runPut({
         db,

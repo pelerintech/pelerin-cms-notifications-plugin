@@ -13,6 +13,7 @@ export interface RuleRow {
   to: string;
   cc: string | null;
   bcc: string | null;
+  from_email: string | null;
   active: boolean;
   created_at: Date;
   updated_at: Date | null;
@@ -48,6 +49,7 @@ export interface CreateRuleInput {
   to: string;
   cc?: string | null;
   bcc?: string | null;
+  from_email?: string | null;
   active?: boolean;
 }
 
@@ -124,6 +126,7 @@ export async function createRule(db: LibSQLDatabase, input: CreateRuleInput): Pr
     to: input.to,
     cc: input.cc ?? null,
     bcc: input.bcc ?? null,
+    from_email: input.from_email ?? null,
     active: input.active ?? true,
     created_at: now,
     updated_at: null as Date | null,
@@ -185,6 +188,7 @@ export async function updateRule(
   if (input.to !== undefined) updates.to = input.to;
   if (input.cc !== undefined) updates.cc = input.cc;
   if (input.bcc !== undefined) updates.bcc = input.bcc;
+  if (input.from_email !== undefined) updates.from_email = input.from_email;
   if (input.active !== undefined) updates.active = input.active;
 
   await db.update(notification_rules).set(updates).where(eq(notification_rules.id, id));
