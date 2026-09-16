@@ -207,7 +207,7 @@ function providerLabel(name) {
   </div>
 </AdminLayout>
 
-<script>
+<script define:vars={{ availableProviders }}>
   // Provider → from-email default map, used to pre-fill the from_email input
   // when a provider is selected (copy-at-update: the rule stores this value).
   const providerFromEmail = Object.fromEntries(
