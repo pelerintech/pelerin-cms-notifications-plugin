@@ -109,7 +109,13 @@ try {
               </li>
               <li>
                 <code>&#123;&#123; formatMoney amount currency 'code|symbol|none' &#125;&#125;</code
-                > — money helper
+                > — money helper (whole-currency value)
+              </li>
+              <li>
+                <code
+                  >&#123;&#123; formatMoney (minorToMajor amount) currency
+                  'code|symbol|none'&#125;&#125;</code
+                > — money from minor units (cents/bani; divides by 100)
               </li>
               <li>
                 <code>&#123;&#123; formatDate iso 'dd/MM/yy' &#125;&#125;</code> — date helper

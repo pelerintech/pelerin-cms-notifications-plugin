@@ -130,6 +130,52 @@ describe('renderTemplate', () => {
     });
   });
 
+  describe('minorToMajor', () => {
+    it('converts minor units to major by dividing by 100', () => {
+      assert.strictEqual(renderTemplate('{{ minorToMajor total }}', { total: 12500 }), '125');
+    });
+
+    it('composed with formatMoney renders the whole-currency amount', () => {
+      assert.strictEqual(
+        renderTemplate('{{ formatMoney (minorToMajor total) currency }}', {
+          total: 12500,
+          currency: 'RON',
+        }),
+        '125,00 RON'
+      );
+    });
+
+    it('composed with formatMoney and a symbol', () => {
+      assert.strictEqual(
+        renderTemplate("{{ formatMoney (minorToMajor total) currency 'symbol' }}", {
+          total: 19999,
+          currency: 'EUR',
+        }),
+        '199,99 €'
+      );
+    });
+
+    it('handles a string minor-unit value', () => {
+      assert.strictEqual(
+        renderTemplate('{{ formatMoney (minorToMajor total) currency }}', {
+          total: '25000',
+          currency: 'RON',
+        }),
+        '250,00 RON'
+      );
+    });
+
+    it('non-numeric value renders as 0,00 when composed with formatMoney', () => {
+      assert.strictEqual(
+        renderTemplate('{{ formatMoney (minorToMajor total) currency }}', {
+          total: 'abc',
+          currency: 'RON',
+        }),
+        '0,00 RON'
+      );
+    });
+  });
+
   describe('compilation caching', () => {
     it('compiles a template once and reuses it', () => {
       let compiles = 0;

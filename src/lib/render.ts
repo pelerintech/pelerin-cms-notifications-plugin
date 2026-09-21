@@ -39,6 +39,18 @@ function formatMoney(value: unknown, currency: unknown, format?: unknown): strin
   return `${formatted} ${cur}`.trim();
 }
 
+/**
+ * Convert a monetary value given in minor units (cents / bani, e.g. 12500 for
+ * 125,00) to major units (divide by 100). Compose it with {@link formatMoney}
+ * in a template to render the whole-currency amount, e.g.
+ * `{{ formatMoney (minorToMajor data.order.total) data.order.currency }}`.
+ * Non-numeric input yields NaN, which `formatMoney` renders as `0,00`.
+ */
+function minorToMajor(value: unknown): number {
+  const num = typeof value === 'number' ? value : Number(value);
+  return num / 100;
+}
+
 function formatDate(iso: unknown, format?: unknown): string {
   const date = new Date(typeof iso === 'string' ? iso : '');
   if (Number.isNaN(date.getTime())) return '';
@@ -82,6 +94,7 @@ export function resetCompileFn(): void {
 
 // Register helpers once on the shared Handlebars instance.
 Handlebars.registerHelper('formatMoney', formatMoney);
+Handlebars.registerHelper('minorToMajor', minorToMajor);
 Handlebars.registerHelper('formatDate', formatDate);
 // `helperMissing` is Handlebars' fallback for an unregistered helper invoked
 // with arguments (e.g. `{{ noSuchHelper x }}`). Registering it once (a static
